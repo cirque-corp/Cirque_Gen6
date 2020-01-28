@@ -3,6 +3,7 @@
 This directory contains a sample program that demonstrates how to interface with Cirque's Olympus capacitive-touch SoC running the CustomMeas firmware. CustomMeas_Demo.ino is an Arduino project that acts as a bridge between Olympus and the PC. It communicates with a PC over USB-CDC (virtual COM port) and implements a simple, character-based command set to interact with Olympus.
 
 Build requirements:
+
 -Arduino IDE 1.8.9 or newer
 
 -Teensyduino 1.49 or newer (this is an add-on for the Arduino IDE)
