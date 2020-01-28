@@ -1,0 +1,7 @@
+board=teensy31
+custom_keys=teensy31_en-us
+custom_opt=teensy31_osstd
+custom_speed=teensy31_96
+custom_usb=teensy31_serial
+target_package=teensy
+target_platform=avr
