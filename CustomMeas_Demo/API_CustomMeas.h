@@ -8,6 +8,11 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 
+#define MAX_NUM_MEAS    (10)
+#define MAX_NUM_RESULTS (16 * MAX_NUM_MEAS)
+#define MEAS_HEADER_LENGTH  (5) // { HID_LengthLSB, HID_LengthMSB, CustomMeasReportID, ValidBytesLSB, ValidBytesMSB }
+#define MAX_I2C_BYTES ((MAX_NUM_RESULTS * 2) + MEAS_HEADER_LENGTH)
+
 typedef struct
 {
   uint8_t Enable;

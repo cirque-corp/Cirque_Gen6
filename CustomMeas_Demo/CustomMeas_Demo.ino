@@ -1,8 +1,14 @@
 #include "API_CustomMeas.h"
 #include "MeasurementConfigs.h"
+#include <i2c_t3.h> // Only including this for the buffer size check below. It is not needed in this scope otherwise
+
+#if (I2C_TX_BUFFER_LENGTH < (MAX_I2C_BYTES + 1) || I2C_RX_BUFFER_LENGTH < (MAX_I2C_BYTES + 1))
+#error I2C_TX_BUFFER_LENGTH and I2C_RX_BUFFER_LENGTH must both be set to at least MAX_I2C_BYTES + 1 (326 at the time this was message was written) \
+Go to \Arduino\hardware\teensy\avr\libraries\i2c_t3\i2c_t3.h and change the #defines to 326 or greater
+#endif
+
 #define PWR_EN_PIN  1
 #define I2C_BIT_RATE      (1400000) // 1.4MHz will result in ~1MHz due to some error in the i2c_t3.h library
-
 
 void setup()
 {

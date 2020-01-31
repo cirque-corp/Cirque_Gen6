@@ -18,19 +18,15 @@
 #define POST_HEADER_ADDR  ((SYS_INFO_ADDR | RO_NON_PERSIST) + 8)
 
 #define MAX_NUM_GROUPS  (5)
-#define MAX_NUM_MEAS    (10)
-#define MAX_NUM_RESULTS (16 * MAX_NUM_MEAS)
 
-#define MEAS_HEADER_LENGTH  (5) // { HID_LengthLSB, HID_LengthMSB, CustomMeasReportID, ValidBytesLSB, ValidBytesMSB }
-#define MAX_HID_LENGTH      (MEAS_HEADER_LENGTH + (MAX_NUM_RESULTS * 2))
-#define HID_LENGTH_LSB      ((uint8_t)(MAX_HID_LENGTH >> 0))
-#define HID_LENGTH_MSB      ((uint8_t)(MAX_HID_LENGTH >> 8))
+#define HID_LENGTH_LSB      ((uint8_t)(MAX_I2C_BYTES >> 0))
+#define HID_LENGTH_MSB      ((uint8_t)(MAX_I2C_BYTES >> 8))
 #define HID_REPORT_ID       (0x0E)
 
 #define XSTR(x) STR(x)
 #define STR(x) #x
 
-#define MAX_I2C_BYTES ((MAX_NUM_RESULTS * 2) + MEAS_HEADER_LENGTH)
+
 
 static uint8_t _i2cAddr = 0x2C; // default to the standard Cirque address
 static CustomMeasCallback *_callback;
