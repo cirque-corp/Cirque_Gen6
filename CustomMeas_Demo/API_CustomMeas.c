@@ -13,6 +13,10 @@
 #define MEAS_INFO_ADDR    (0x51100000)
 #define MEAS_INFO_INC     (0x00001000)
 
+#define SYS_INFO_ADDR     (0x20000000)
+#define RO_NON_PERSIST    (0x00000800)
+#define POST_HEADER_ADDR  ((SYS_INFO_ADDR | RO_NON_PERSIST) + 8)
+
 #define MAX_NUM_GROUPS  (5)
 #define MAX_NUM_MEAS    (10)
 #define MAX_NUM_RESULTS (16 * MAX_NUM_MEAS)
@@ -298,4 +302,23 @@ void API_CustomMeas_WriteMeasInfo(uint8_t index, CustomMeasInfo_t * config)
   uint32_t address = MEAS_INFO_ADDR + (index * MEAS_INFO_INC);
   
   API_ExtMemAccess_WriteMemory(address, (uint8_t*)config, MEAS_INFO_SIZE);
+}
+
+void API_CustomMeas_ReadVersionInfo(SystemInfo_t * config)
+{
+  API_ExtMemAccess_ReadMemory(POST_HEADER_ADDR, (uint8_t*)config, SYSTEM_INFO_SIZE);
+}
+
+#define SVN_WORKING_COPY_IS_DIRTY (0x80000000)
+#define SVN_BRANCH                (0x40000000)
+
+// Converts the firmware rev bytes into a more useful struct
+void API_CustomMeas_FirmwareRevBytes_To_FirmwareRevInfo(uint8_t * bytes, firmwareRevInfo_t * firmwareRevInfo)
+{
+  uint32_t temp = (bytes[3] << 24) | (bytes[2] << 16) | (bytes[1] << 8) | (bytes[0] << 0); 
+
+  firmwareRevInfo->RevisionRegister = temp;
+  firmwareRevInfo->SvnRevision = temp & ~(SVN_WORKING_COPY_IS_DIRTY | SVN_BRANCH);
+  firmwareRevInfo->IsDirty = (temp & SVN_WORKING_COPY_IS_DIRTY) == 0 ? false : true;
+  firmwareRevInfo->IsBranch = (temp & SVN_BRANCH) == 0 ? false : true;
 }

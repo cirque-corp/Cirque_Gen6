@@ -91,6 +91,11 @@ void loop()
         WriteAllInfo();
         Serial.println("All Global, Group, and Measurement info written");
         break;
+      case 'v':
+        SystemInfo_t sysInfo;
+        API_CustomMeas_ReadVersionInfo(&sysInfo);
+        PrintFirmwareVersionInfo(&sysInfo);
+        break;
       case '\r':
         break;  // ignore carriage-return
       case '\n':
@@ -127,6 +132,9 @@ static void PrintCommands()
 
   Serial.println("'p' - persist measurement info to flash");
   Serial.println("'r' - restore measurement info from flash");
+
+  Serial.println("'v' - read firmware version info");
+  
   Serial.println("'l' - list commands");
 }
 
@@ -206,4 +214,22 @@ static void WriteAllInfo()
   {
     API_CustomMeas_WriteMeasInfo(measIndex, &(MeasInfoArray[measIndex]));
   }
+}
+
+static void PrintFirmwareVersionInfo(SystemInfo_t * sysInfo)
+{
+  Serial.printf("HardwareID:\t0x%02X\r\n", sysInfo->HardwareID);
+  Serial.printf("FirmwareID:\t0x%02X\r\n", sysInfo->FirmwareID);
+  Serial.printf("VendorID:\t0x%04X\r\n", (sysInfo->VendorID_MSB << 8) | sysInfo->VendorID_LSB);
+  Serial.printf("ProductID:\t0x%04X\r\n", (sysInfo->ProductID_MSB << 8) | sysInfo->ProductID_LSB);
+  Serial.printf("VersionID:\t0x%04X\r\n", (sysInfo->VersionID_MSB << 8) | sysInfo->VersionID_LSB);
+
+  firmwareRevInfo_t firmwareInfo;
+
+  API_CustomMeas_FirmwareRevBytes_To_FirmwareRevInfo(&sysInfo->FirmwareRevision_B0, &firmwareInfo);
+
+  Serial.printf("Firmware Rev:\t%d, %s, %s (0x%08X)\r\n", firmwareInfo.SvnRevision,
+                                                          firmwareInfo.IsDirty ? "Dirty" : "Clean",
+                                                          firmwareInfo.IsBranch ? "Branch" : "Trunk",
+                                                          firmwareInfo.RevisionRegister);
 }

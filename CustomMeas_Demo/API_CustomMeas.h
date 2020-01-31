@@ -53,6 +53,48 @@ typedef struct
 } CustomMeasInfo_t;
 #define MEAS_INFO_SIZE (sizeof(CustomMeasInfo_t))
 
+typedef struct
+{
+  uint32_t RevisionRegister;  // This is simply the 4 bytes packed into a uint32_t type
+  uint16_t SvnRevision;       // SVN commit number
+  bool IsBranch;              // SVN location (true: located in a BRANCH, false: located in the TRUNK)
+  bool IsDirty;               // SVN state (true: FW doesn't match the SVN repository, false: FW matches the SVN repository)
+} firmwareRevInfo_t;
+
+typedef struct
+{
+  uint8_t HardwareID;
+  uint8_t FirmwareID;
+  uint8_t VendorID_LSB;
+  uint8_t VendorID_MSB;
+  uint8_t ProductID_LSB;
+  uint8_t ProductID_MSB;
+  uint8_t VersionID_LSB;
+  uint8_t VersionID_MSB;
+  uint8_t FirmwareRevision_B0;  // 
+  uint8_t FirmwareRevision_B1;
+  uint8_t FirmwareRevision_B2;
+  uint8_t FirmwareRevision_B3;
+  uint8_t Unused_0;
+  uint8_t Unused_1;
+  uint8_t Unused_2;
+  uint8_t Unused_3;
+  uint8_t GlobalROConfigRawAddr_B0;
+  uint8_t GlobalROConfigRawAddr_B1;
+  uint8_t GlobalROConfigRawAddr_B2;
+  uint8_t GlobalROConfigRawAddr_B3;
+  uint8_t GlobalRWConfigRawAddr_B0;
+  uint8_t GlobalRWConfigRawAddr_B1;
+  uint8_t GlobalRWConfigRawAddr_B2;
+  uint8_t GlobalRWConfigRawAddr_B3;
+  uint8_t GlobalPersistentConfigRawAddr_B0;
+  uint8_t GlobalPersistentConfigRawAddr_B1;
+  uint8_t GlobalPersistentConfigRawAddr_B2;
+  uint8_t GlobalPersistentConfigRawAddr_B3;
+  uint8_t IsBigEndian;
+} SystemInfo_t;
+#define SYSTEM_INFO_SIZE (sizeof(SystemInfo_t))
+
 typedef void CustomMeasCallback(int16_t* pResultsArray, uint16_t numResults);
 
 bool API_CustomMeas_Init(uint8_t i2cAddr, uint32_t i2cBitRate, CustomMeasCallback *callback);
@@ -71,6 +113,8 @@ void API_CustomMeas_ReadGroupInfo(uint8_t index, CustomMeasGroupInfo_t * config)
 void API_CustomMeas_WriteGroupInfo(uint8_t index, CustomMeasGroupInfo_t * config);
 void API_CustomMeas_ReadMeasInfo(uint8_t index, CustomMeasInfo_t * config);
 void API_CustomMeas_WriteMeasInfo(uint8_t index, CustomMeasInfo_t * config);
+void API_CustomMeas_ReadVersionInfo(SystemInfo_t * config);
+void API_CustomMeas_FirmwareRevBytes_To_FirmwareRevInfo(uint8_t * bytes, firmwareRevInfo_t * firmwareRevInfo);
 
 #endif  // _API_CustomMeas_H_
 
