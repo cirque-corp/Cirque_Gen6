@@ -425,7 +425,7 @@ bool BL_program(const uint8_t * buf, uint32_t numBytes, uint32_t address)
 	// Validate.
 	BL_cmd_validate(1);
 	delay(10);
-	if( !BL_get_status( &status ) || status.LastError != NO_ERROR /* || ( status.Flags & 0x10 ) == 0 */ )
+	if( !BL_get_status( &status ) || status.LastError != NO_ERROR || ( status.Flags & 0x10 ) == 0 )
 	{
 		BL_cmd_format_image( 0, 1, EntryPoint, TargetHIDDescAddr, TargetI2CAddress, BL_REPORT_ID );
 		return false;
