@@ -2,7 +2,8 @@
 
 #include "Borax_BL.h"
 #include "I2C.h"
-#include "Utils.h"
+#include "Fletcher32.h"
+#include "Fletcher16.h"
 #include <Arduino.h>
 
 #define BL_REPORT_CMD_REG  (0x0005)
@@ -395,7 +396,7 @@ bool BL_program(const uint8_t * buf, uint32_t numBytes, uint32_t address)
 	delay( FormatImageDelay );
 
 	// Format regions.
-	BL_cmd_format_region( 0, address, numBytes, Fletcher_32( buf, numBytes ) );
+	BL_cmd_format_region( 0, address, numBytes, Fletcher32( buf, numBytes ) );
 
 	delay( (FormatRegionsPageDelay * ((numBytes / 1024) + 1)) );
 
@@ -424,12 +425,13 @@ bool BL_program(const uint8_t * buf, uint32_t numBytes, uint32_t address)
 
 	// Validate.
 	BL_cmd_validate(1);
-	delay(10);
-	if( !BL_get_status( &status ) || status.LastError != NO_ERROR /* || ( status.Flags & 0x10 ) == 0 */ )
+	delay(100);
+	if( !BL_get_status( &status ) || status.LastError != NO_ERROR || ( status.Flags & 0x10 ) == 0 )
 	{
 		BL_cmd_format_image( 0, 1, EntryPoint, TargetHIDDescAddr, TargetI2CAddress, BL_REPORT_ID );
 		return false;
 	}
+ 
 
 	// Reset.
 	BL_cmd_reset();
