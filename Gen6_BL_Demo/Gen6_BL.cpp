@@ -1,23 +1,17 @@
 // Copyright (c) 2019 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
 
 #include <i2c_t3.h>
+
 #include "Borax_BL.h"
 
 // --------------------
 // The tests
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "FW0202.h"
-uint32_t address_0202 = 0x0002d420;
 #include "FW9902.h"
-uint32_t address_9902 = 0x0002d420;
 
-#ifdef __cplusplus
-}
-#endif
+uint32_t address_0202 = 0x0002d420;
+uint32_t address_9902 = 0x0002d420;
 
 void Test_Gen6_Program_0202()
 {
@@ -47,8 +41,8 @@ void Test_Gen6_Program_9902()
 
 void Test_Gen6_get_status()
 {
-    bl_status_t status;
-    BL_get_status(&status, false);
+    bl_read_packet status;
+    BL_get_status(&status);
 
     Serial.printf("Sentinel: 0x%04X\n", status.Sentinel);
     Serial.printf("Version: 0x%02X\n", status.Version);

@@ -35,7 +35,7 @@
  * 
  * @return uint32_t - the calculated checksum
  */
-uint32_t Fletcher32(void const *ptr, uint32_t n_bytes);
+extern uint32_t Fletcher32(void const *ptr, uint32_t n_bytes);
 
 /**
  * Continue modifying a checksum value with more data.

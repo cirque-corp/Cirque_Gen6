@@ -7,10 +7,10 @@ extern "C" {
 #ifndef _BORAX_BL_H_
 #define _BORAX_BL_H_
 
-#include <stdbool.h>
-#include <stdint.h>
+#include "Borax_BL_I2C_Commands.h"
 
-#define BL_REPORT_ID  (0x07)
+#define STATUS_BUSY_BIT 0x08
+#define STATUS_VALID_IMAGE 0x10
 
 enum ErrorCodes
 {
@@ -40,36 +40,13 @@ typedef struct
     uint8_t FormatDelay;
     uint32_t MemAddress;
     uint16_t NumBytes;
-    uint8_t  Data[517];
+    uint8_t  Data[MAX_READ_DATA_SIZE];
     uint16_t Checksum;
-} bl_status_t;
+} bl_read_packet;
 
-#define STATUS_BUSY_BIT 0x08
-#define STATUS_VALID_IMAGE 0x10
-
-void BL_init(uint8_t i2cSlaveAddr);
-void BL_cmd_write(uint32_t offset, uint32_t numBytes, const uint8_t * dataPtr);
-void BL_cmd_flush(void);
-void BL_cmd_validate(uint8_t validationType);
-void BL_cmd_reset(void);
-void BL_cmd_format_image(
-        uint8_t imageType,
-        uint8_t numRegions,
-        uint32_t entryPoint,
-        uint16_t hidDescriptorAddress,
-        uint8_t i2cAddress,
-        uint8_t reportID);
-void BL_cmd_format_region(
-        uint8_t regionNumber,
-        uint32_t regionOffset,
-        uint32_t regionSize,
-        uint32_t regionChecksum);
-void BL_cmd_invoke_bootloader(void);
-void BL_cmd_write_memory(uint32_t offset, uint16_t numBytes, uint8_t * dataPtr);
-void BL_cmd_read_memory(uint32_t offset, uint16_t numBytes, uint8_t * dataPtr);
-bool BL_get_status(bl_status_t *status, bool retries);
-bool BL_check_status_with_retries(bl_status_t *status);
+bool BL_get_status(bl_read_packet *status);
 bool BL_program(const uint8_t * buf, uint32_t numBytes, uint32_t address);
+uint16_t BL_cmd_read_memory(uint32_t offset, uint16_t numBytes, uint8_t *data);
 
 #endif  // _BORAX_BL_H_
 
