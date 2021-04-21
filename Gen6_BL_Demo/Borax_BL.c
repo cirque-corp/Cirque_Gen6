@@ -244,7 +244,7 @@ static bool Validate(void)
     BL_cmd_validate(1);
     delay(100);
 
-    if ((CheckStatusAndError()) || (g_packet.Flags & STATUS_VALID_IMAGE))
+    if ((CheckStatusAndError()) && (g_packet.Flags & STATUS_VALID_IMAGE))
     {
         return true;
     }
