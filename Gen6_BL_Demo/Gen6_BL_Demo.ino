@@ -5,7 +5,6 @@
 #include "Borax_BL.h"
 
 #define PWR_EN_PIN 1
-#define I2C_SLAVE_ADDR 0x2C
 
 void setup()
 {
@@ -18,7 +17,6 @@ void setup()
     Serial.begin(115200);
     delay(1000);
 
-    BL_init(I2C_SLAVE_ADDR);
     I2C_init(400000);
 
     PrintCommands();
@@ -34,11 +32,9 @@ void loop()
         {
             case 'g':
                 Test_Gen6_get_hwid();
-                Serial.println("");
                 break;
             case 's':
                 Test_Gen6_get_status();
-                Serial.println("");
                 break;
             case '?':
             case 'h':
@@ -46,11 +42,9 @@ void loop()
                 PrintCommands();
                 break;
             case 'p':
-                Serial.println("Programming(99:02) will take about 15 seconds.\nPlease wait...");
                 Test_Gen6_Program_9902();
                 break;
             case 'r':
-                Serial.println("Programming(02:22) will take about 15 seconds.\nPlease wait...");
                 Test_Gen6_Program_0202();
                 break;
             case '\r':

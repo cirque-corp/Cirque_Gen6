@@ -1,11 +1,11 @@
 // Copyright (c) 2019 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
 
+#ifndef _BORAX_BL_H_
+#define _BORAX_BL_H_
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#ifndef _BORAX_BL_H_
-#define _BORAX_BL_H_
 
 #include "Borax_BL_I2C_Commands.h"
 
@@ -29,6 +29,18 @@ enum ErrorCodes
     CHECKSUM_MISMATCH = 12,
 };
 
+enum BLProgramErrors
+{
+    BLProgErr_OK = 0,
+    BLProgErr_InvokeBootloader = 101,
+    BLProgErr_FormatImage = 102,
+    BLProgErr_FormatRegion = 103,
+    BLProgErr_WriteImage = 104,
+    BLProgErr_Flush = 105,
+    BLProgErr_Validate = 106,
+    BLProgErr_Reset = 107,
+};
+
 typedef struct
 {
     uint16_t Sentinel;
@@ -45,11 +57,11 @@ typedef struct
 } bl_read_packet;
 
 bool BL_get_status(bl_read_packet *status);
-bool BL_program(const uint8_t * buf, uint32_t numBytes, uint32_t address);
+uint16_t BL_program(const uint8_t * buf, uint32_t numBytes, uint32_t address);
 uint16_t BL_cmd_read_memory(uint32_t offset, uint16_t numBytes, uint8_t *data);
-
-#endif  // _BORAX_BL_H_
 
 #ifdef __cplusplus
 }
 #endif
+
+#endif  // _BORAX_BL_H_

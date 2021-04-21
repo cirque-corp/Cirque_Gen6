@@ -25,6 +25,11 @@
 #ifndef __FLETCHER32_H_INCL__
 #define __FLETCHER32_H_INCL__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <stdint.h>
 
 /** 
@@ -49,6 +54,10 @@ extern uint32_t Fletcher32(void const *ptr, uint32_t n_bytes);
  * @return uint32_t - the calculated checksum
  */
 uint32_t Fletcher32_Continue(void const *ptr, uint32_t n_bytes, uint32_t previousChecksum);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // __FLETCHER32_H_INCL__
 

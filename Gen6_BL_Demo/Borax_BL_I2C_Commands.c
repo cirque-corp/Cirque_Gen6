@@ -135,6 +135,7 @@ void BL_cmd_format_image(
     I2C_write_DummyBytes(BL_REPORT_LEN - FORMAT_IMG_CMD_HEADER_SIZE);
     I2C_endTransmission(true);
 }
+
 void BL_cmd_format_region(uint8_t regionNumber, uint32_t regionOffset, uint32_t regionSize, uint32_t regionChecksum)
 {
     I2C_beginTransmission(I2C_SLAVE_ADDR);

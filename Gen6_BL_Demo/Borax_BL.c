@@ -1,22 +1,42 @@
 // Copyright (c) 2019 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
 
+#include <Arduino.h>  //for delay
 #include <stdbool.h>
 #include <stdint.h>
 
 #include "Fletcher32.h"
-#include "Borax_BL_I2C_Commands.h"
 #include "Borax_BL.h"
-//#include "I2C.h"
-
-#include <Arduino.h>
 
 static uint8_t dataBuffer[BL_REPORT_LEN];
+static bl_read_packet g_packet;
 
-static bool is_bootloader_mode(uint16_t sentinel);
-static bool is_image_mode(uint16_t sentinel);
-static bool is_sentinel_valid(uint16_t sentinel);
+static void ParseReadPacket(bl_read_packet *packet, uint8_t *data);
+static bool GetPacket(bl_read_packet *packet, bool retries);
+static bool IsBootloaderMode(uint16_t sentinel);
+static bool IsImageMode(uint16_t sentinel);
+static bool IsSentinelValid(uint16_t sentinel);
+static bool CheckStatusAndError(void);
+static bool InvokeBootloader(void);
+static bool FormatImage(const uint8_t *buf, bl_read_packet *packet);
+static bool FormatRegion(
+        const uint8_t *buf,
+        uint32_t address,
+        uint32_t numBytes,
+        bl_read_packet *packet);
+static bool WriteImage(
+        const uint8_t *buf,
+        uint32_t address,
+        uint32_t numBytes,
+        bl_read_packet *packet);
+static bool Flush(void);
+static bool Validate(void);
+static bool Reset(void);
 
-static void parse_read_packet(bl_read_packet *packet, uint8_t *data)
+///////////////////////////////////////////////////////////////////////////////
+//Private Functions
+///////////////////////////////////////////////////////////////////////////////
+///
+static void ParseReadPacket(bl_read_packet *packet, uint8_t *data)
 {
     uint16_t i;
 
@@ -51,35 +71,31 @@ static void parse_read_packet(bl_read_packet *packet, uint8_t *data)
 }
 
 //returns false if Sentinel is invalid
-static bool BL_get_packet(bl_read_packet *packet, bool retries)
+static bool GetPacket(bl_read_packet *packet, bool retries)
 {
     uint16_t count;
+    bool success = false;
 
-    BL_read(dataBuffer);
-    parse_read_packet(packet, dataBuffer);
-
-    if(!is_sentinel_valid( packet->Sentinel))
+    for (count = 0; count < 50; count++)
     {
-        return false;
-    }
+        BL_read(dataBuffer);
+        ParseReadPacket(packet, dataBuffer);
 
-    count = 0;
-    while (packet->Flags & STATUS_BUSY_BIT)
-    {
-        if(count++ > 50)
+        if ((packet->Flags & STATUS_BUSY_BIT) == 0)
         {
-            return false;
+            if(IsSentinelValid(packet->Sentinel))
+            {
+                success = true;
+            }
+            break;
+        }
+        if (retries == false)
+        {
+            break;
         }
         delay(10);
-
-        BL_read(dataBuffer);
-        parse_read_packet(packet, dataBuffer);
-        if(!is_sentinel_valid(packet->Sentinel))
-        {
-            return false;
-        }
     }
-    return true;
+    return success;
 }
 
 
@@ -92,7 +108,7 @@ static bool BL_get_packet(bl_read_packet *packet, bool retries)
  *    0x6D49 is image ('mI' = 'Im' with LSByte first)
  *    0x426C is also image (0x6C42 reversed) in rare cases
  */
-static bool is_bootloader_mode(uint16_t sentinel)
+static bool IsBootloaderMode(uint16_t sentinel)
 {
     switch( sentinel )
     {
@@ -104,7 +120,7 @@ static bool is_bootloader_mode(uint16_t sentinel)
 }
 
 
-static bool is_image_mode(uint16_t sentinel)
+static bool IsImageMode(uint16_t sentinel)
 {
     switch( sentinel )
     {
@@ -117,49 +133,46 @@ static bool is_image_mode(uint16_t sentinel)
 }
 
 
-static bool is_sentinel_valid(uint16_t sentinel)
+static bool IsSentinelValid(uint16_t sentinel)
 {
-    return (is_image_mode(sentinel) || is_bootloader_mode(sentinel));
+    return (IsImageMode(sentinel) || IsBootloaderMode(sentinel));
 }
 
-static void format_image(const uint8_t *buf, bl_read_packet *packet)
+
+//returns false if Sentinel is invalid or if status shows error
+static bool CheckStatusAndError(void)
 {
+    if ((GetPacket(&g_packet, true) == false) || (g_packet.LastError != NO_ERROR))
+    {
+        return false;
+    }
+    return true;
+}
 
-    uint32_t PageWriteDelay;
-    uint8_t TargetI2CAddress;
-    uint16_t TargetHIDDescAddr;
+
+static bool InvokeBootloader(void)
+{
+    BL_cmd_invoke_bootloader();
+    delay(100);
+
+    return CheckStatusAndError();
+}
+
+
+static bool FormatImage(const uint8_t *buf, bl_read_packet *packet)
+{
     uint32_t EntryPoint;
-
-    if(packet->Version >= 0x08)
-    {
-        PageWriteDelay = packet->WriteDelay * 10;
-    }
-    else
-    {
-        PageWriteDelay = 100;
-    }
 
     EntryPoint = buf[4] | ( buf[5] << 8 ) | ( buf[6] << 16 ) | ( buf[7] << 24 );
 
-    if( packet->Version >= 0x09)
-    {
-        TargetI2CAddress = 0xFF;
-        TargetHIDDescAddr = 0xFFFF;
-    }
-    else
-    {
-        TargetI2CAddress = 0x2C;
-        TargetHIDDescAddr = 0x0020;
-    }
+    BL_cmd_format_image(0, 1, EntryPoint);
+    delay(packet->WriteDelay * 10);
 
-    BL_cmd_format_image( 0, 1, EntryPoint, TargetHIDDescAddr, TargetI2CAddress, BL_REPORT_ID );
-    delay(PageWriteDelay);
-
-
+    return CheckStatusAndError();
 }
 
 
-static void format_region(
+static bool FormatRegion(
         const uint8_t *buf,
         uint32_t address,
         uint32_t numBytes,
@@ -167,10 +180,13 @@ static void format_region(
 {
     BL_cmd_format_region(0, address, numBytes, Fletcher32(buf, numBytes));
     delay( (packet->FormatDelay * ((numBytes / 1024) + 1)) );
+
+    return CheckStatusAndError();
 }
 
 
-bool write_image(
+//returns true success, false for error
+static bool WriteImage(
         const uint8_t *buf,
         uint32_t address,
         uint32_t numBytes,
@@ -178,7 +194,7 @@ bool write_image(
 {
     uint32_t Length;
     uint32_t PayloadSize;
-    bool error = false;
+    bool success = true;
 
     Length = numBytes;
     while (Length > 0)
@@ -203,124 +219,114 @@ bool write_image(
             delay(1);
         }
 
-        if ((BL_get_status(packet) == false) ||
-            (packet->LastError != NO_ERROR))
+        if(CheckStatusAndError() == false)
         {
-            error = true;
+            success = false;
             break;
         }
         Length -= PayloadSize;
     }
-    return error;
+    return success;
 }
 
 
-bool BL_program(const uint8_t *buf, uint32_t numBytes, uint32_t address)
+static bool Flush(void)
 {
-
-    bl_read_packet packet;
-    bool error = false;
-    bool reformat = false;
-
-    if (BL_get_status(&packet) == false)
-    {
-        error = true;
-    }
-
-    if (!error)
-    {
-        if( packet.LastError != NO_ERROR )
-        {
-            BL_cmd_reset();
-            delay(100);
-
-            if ((BL_get_status(&packet) == false) || (packet.LastError != NO_ERROR))
-            {
-                error = true;
-            }
-        }
-    }
-
-    if (!error)
-    {
-        if (!is_bootloader_mode(packet.Sentinel))
-        {
-            BL_cmd_invoke_bootloader();
-            delay(100);
-
-            if (BL_get_status(&packet) == false)
-            {
-                error = true;
-            }
-        }
-    }
-
-    if (!error)
-    {
-        format_image(buf, &packet);
-        if ((BL_get_status(&packet) == false) || (packet.LastError != NO_ERROR))
-        {
-            error = true;
-        }
-    }
-
-    if (!error)
-    {
-        format_region(buf, address, numBytes, &packet);
-        if ((BL_get_status(&packet) == false) || (packet.LastError != NO_ERROR))
-        {
-            error = true;
-        }
-    }
-
-    if (!error)
-    {
-        error = write_image(buf, address, numBytes, &packet);
-        if (error)
-        {
-            reformat = true;
-        }
-    }
-    if (!error)
-    {
-        BL_cmd_flush();
-        delay(10);
-
-        if ((BL_get_status(&packet) == false) || (packet.LastError != NO_ERROR))
-        {
-            error = true;
-            reformat = true;
-        }
-    }
-
-    if (!error)
-    {
-        BL_cmd_validate(1);
-        delay(100);
-
-        if ((BL_get_status(&packet) == false) ||
-            (packet.LastError != NO_ERROR)          ||
-            ((packet.Flags & STATUS_VALID_IMAGE) == 0))
-        {
-            error = true;
-            reformat = true;
-        }
-    }
-
-    if (error && reformat)
-    {
-        format_image(buf, &packet);
-    }
-
-    BL_cmd_reset();
+    BL_cmd_flush();
     delay(10);
 
-    if ((BL_get_status(&packet) == false) || (packet.LastError != NO_ERROR))
+    return CheckStatusAndError();
+}
+
+
+static bool Validate(void)
+{
+    BL_cmd_validate(1);
+    delay(100);
+
+    if ((CheckStatusAndError()) || (g_packet.Flags & STATUS_VALID_IMAGE))
     {
-        return false;
+        return true;
+    }
+    return false;
+}
+
+
+static bool Reset(void)
+{
+    BL_cmd_reset();
+    delay(100);
+
+    return CheckStatusAndError();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//Public Functions
+///////////////////////////////////////////////////////////////////////////////
+
+//returns either ErrorCodes or BLProgramErrors
+uint16_t BL_program(const uint8_t *buf, uint32_t numBytes, uint32_t address)
+{
+    uint16_t error = 0;
+    bool reformat = false;
+
+    if (CheckStatusAndError() == false)
+    {
+        if (Reset() == false)
+        {
+            error = g_packet.LastError;
+        }
     }
 
-    return true;
+    if (!error)
+    {
+        if (!IsBootloaderMode(g_packet.Sentinel))
+        {
+            if(InvokeBootloader() == false)
+            {
+                error = BLProgErr_InvokeBootloader;
+            }
+        }
+    }
+
+    if (!error)
+    {
+        if(FormatImage(buf, &g_packet) == false)
+        {
+            error = BLProgErr_FormatImage;
+        }
+        else if(FormatRegion(buf, address, numBytes, &g_packet) == false)
+        {
+            error = BLProgErr_FormatRegion;
+        }
+        else if(WriteImage(buf, address, numBytes, &g_packet) == false)
+        {
+            error = BLProgErr_WriteImage;
+            reformat = true;
+        }
+        else if (Flush() == false)
+        {
+            error = BLProgErr_Flush;
+            reformat = true;
+        }
+        else if (Validate() == false)
+        {
+            error = BLProgErr_Validate;
+            reformat = true;
+        }
+    }
+
+    if (reformat)
+    {
+        FormatImage(buf, &g_packet);
+    }
+
+    if (Reset() == false)
+    {
+        error = BLProgErr_Reset;
+    }
+
+    return error;
 }
 
 
@@ -330,12 +336,12 @@ uint16_t BL_cmd_read_memory(uint32_t offset, uint16_t numBytes, uint8_t *data)
     uint16_t i;
     uint16_t count;
     bl_read_packet packet;
-    bool error;
+    bool success;
 
     BL_request_read(offset, numBytes);
-    error = BL_get_packet(&packet, true);
+    success = GetPacket(&packet, true);
 
-    if (error)
+    if (!success)
     {
         return 0;
     }
@@ -356,7 +362,7 @@ uint16_t BL_cmd_read_memory(uint32_t offset, uint16_t numBytes, uint8_t *data)
 
 bool BL_get_status(bl_read_packet *packet)
 {
-    return BL_get_packet(packet, true);
+    return GetPacket(packet, true);
 }
 
 
