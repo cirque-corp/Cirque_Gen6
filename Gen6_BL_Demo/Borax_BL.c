@@ -39,6 +39,8 @@ static bool Reset(void);
 static void ParseReadPacket(bl_read_packet *packet, uint8_t *data)
 {
     uint16_t i;
+    uint16_t checksumIndex;
+    uint16_t length;
 
     // Length_LSB = data[0]
     // Length_MSB = data[1]
@@ -61,13 +63,23 @@ static void ParseReadPacket(bl_read_packet *packet, uint8_t *data)
 
     packet->NumBytes = data[15] | (data[16] << 8);
 
-    for(i = 0; i < (packet->NumBytes <= 514 ? packet->NumBytes : 514); i++)
+    if (packet->NumBytes <= MAX_READ_DATA_SIZE)
+    {
+        length = packet->NumBytes;
+    }
+    else
+    {
+        length = MAX_READ_DATA_SIZE;
+    }
+
+    for(i = 0; i < length; i++)
     {
         packet->Data[i] = data[17 + i];
     }
 
-    packet->Checksum = data[17 + (packet->NumBytes <= 514 ? packet->NumBytes : 514)];
-    packet->Checksum |= data[17 + (packet->NumBytes <= 514 ? packet->NumBytes : 514) + 1] << 8;
+    checksumIndex = length + READ_STATUS_SIZE;
+
+    packet->Checksum = data[checksumIndex] | data[checksumIndex + 1] << 8;
 }
 
 //returns false if Sentinel is invalid
@@ -208,7 +220,10 @@ static bool WriteImage(
             PayloadSize = Length;
         }
 
-        BL_cmd_write( address + numBytes - Length, PayloadSize, &buf[numBytes - Length] );
+        BL_cmd_write(
+                address + numBytes - Length,
+                PayloadSize,
+                &buf[numBytes - Length] );
 
         if (PayloadSize * packet->WriteDelay > 100)
         {
@@ -335,25 +350,22 @@ uint16_t BL_cmd_read_memory(uint32_t offset, uint16_t numBytes, uint8_t *data)
 {
     uint16_t i;
     uint16_t count;
-    bl_read_packet packet;
-    bool success;
 
     BL_request_read(offset, numBytes);
-    success = GetPacket(&packet, true);
 
-    if (!success)
+    if (GetPacket(&g_packet, true) == false)
     {
         return 0;
     }
 
     count = numBytes;
-    if (numBytes > packet.NumBytes)
+    if (numBytes > g_packet.NumBytes)
     {
-        count = packet.NumBytes;
+        count = g_packet.NumBytes;
     }
     for (i = 0; i < count; i++)
     {
-        data[i] = packet.Data[i];
+        data[i] = g_packet.Data[i];
     }
 
     return count;

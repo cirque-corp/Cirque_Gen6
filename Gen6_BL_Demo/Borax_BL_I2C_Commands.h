@@ -8,6 +8,9 @@
 #ifndef BORAX_BL_I2C_COMMAND_H
 #define BORAX_BL_I2C_COMMAND_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define I2C_SLAVE_ADDR (0x2C)
 #define BL_REPORT_ID  (0x07)
@@ -95,5 +98,8 @@ void BL_cmd_write_memory(uint32_t offset, uint16_t numBytes, uint8_t * dataPtr);
 uint16_t BL_request_read(uint32_t offset, uint16_t numBytes);
 void BL_read(uint8_t *data);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif //BORAX_BL_I2C_COMMAND_H
