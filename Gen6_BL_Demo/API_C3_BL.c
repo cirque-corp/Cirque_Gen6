@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 #include "Fletcher32.h"
-#include "Borax_BL.h"
+#include "API_C3_BL.h"
 
 static uint8_t dataBuffer[BL_REPORT_LEN];
 static bl_read_packet g_packet;
@@ -283,7 +283,7 @@ static bool Reset(void)
 uint16_t BL_program(const uint8_t *buf, uint32_t numBytes, uint32_t address)
 {
     uint16_t error = 0;
-    bool reformat = false;
+    bool erase_image = false;
 
     if (CheckStatusAndError() == false)
     {
@@ -317,21 +317,22 @@ uint16_t BL_program(const uint8_t *buf, uint32_t numBytes, uint32_t address)
         else if(WriteImage(buf, address, numBytes, &g_packet) == false)
         {
             error = BLProgErr_WriteImage;
-            reformat = true;
+            erase_image = true;
         }
         else if (Flush() == false)
         {
             error = BLProgErr_Flush;
-            reformat = true;
+            erase_image = true;
         }
         else if (Validate() == false)
         {
             error = BLProgErr_Validate;
-            reformat = true;
+            erase_image = true;
         }
     }
 
-    if (reformat)
+    //any error after WriteImage requires erasing the image
+    if (erase_image)
     {
         FormatImage(buf, &g_packet);
     }

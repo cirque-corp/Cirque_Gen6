@@ -11,7 +11,7 @@
 #include "Fletcher32.h"
 #include "Fletcher16.h"
 
-#include "Borax_BL_I2C_Commands.h"
+#include "API_C3_I2C_Commands.h"
 
 #define BL_REPORT_CMD_REG  (0x0005)
 #define BL_REPORT_SET_FEAT (0x0337)
@@ -221,7 +221,7 @@ void BL_read(uint8_t *data)
     I2C_request(I2C_SLAVE_ADDR, BL_REPORT_LEN, true);
 
     i = 0;
-    while(I2C_available())
+    while(I2C_available() && (i < BL_REPORT_LEN))
     {
         data[i++] = I2C_read();
     }

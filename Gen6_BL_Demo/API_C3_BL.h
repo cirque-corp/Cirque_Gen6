@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-#include "Borax_BL_I2C_Commands.h"
+#include "API_C3_I2C_Commands.h"
 
 #define STATUS_BUSY_BIT 0x08
 #define STATUS_VALID_IMAGE 0x10

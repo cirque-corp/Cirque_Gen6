@@ -1,5 +1,5 @@
 /*
- * Borax_BL_I2C_Commands.h
+ * API_C3_I2C_Commands.h
  *
  * Copyright (c) 2021 Cirque Corp. Restrictions apply.
  * See: www.cirque.com/sw-license

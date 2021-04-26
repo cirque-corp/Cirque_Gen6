@@ -1,13 +1,14 @@
 // Copyright (c) 2019 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
 
+#include "API_C3_BL.h"
 #include "Gen6_BL.h"
 #include "I2C.h"
-#include "Borax_BL.h"
 
 #define PWR_EN_PIN 1
 
 void setup()
 {
+    //Power cycle the Touchpad
     pinMode(PWR_EN_PIN, OUTPUT);
     digitalWrite(PWR_EN_PIN, LOW);
     delay(100);
