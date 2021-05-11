@@ -9,8 +9,19 @@ extern "C" {
 
 #include "API_C3_I2C_Commands.h"
 
+#define STATUS_DUAL_IMAGE 0x01
+#define STATUS_ACTIVE_IMAGE 0x06
 #define STATUS_BUSY_BIT 0x08
 #define STATUS_VALID_IMAGE 0x10
+#define STATUS_FORCE 0x20
+#define STATUS_RSVD 0xC0
+
+#define STATUS_DUAL_IMAGE_SHIFT 0
+#define STATUS_ACTIVE_IMAGE_SHIFT 1
+#define STATUS_BUSY_BIT_SHIFT 3
+#define STATUS_VALID_IMAGE_SHIFT 4
+#define STATUS_FORCE_SHIFT 5
+#define STATUS_RSVD_SHIFT 7
 
 enum ErrorCodes
 {
