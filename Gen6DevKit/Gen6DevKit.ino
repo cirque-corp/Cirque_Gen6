@@ -68,7 +68,7 @@ void loop()
           
       case 'C':
           Serial.println(F("Factory Calibrate... "));
-          if(1) // !!! (API_C3_factoryCalibrate())
+          if(API_C3_factoryCalibrate())
           {
               Serial.println(F("Done"));
           }
@@ -90,7 +90,8 @@ void loop()
           
       case 'a':
           Serial.println(F("Absolute Mode Set"));
-          API_C3_setCRQ_AbsoluteMode();
+          // API_C3_setCRQ_AbsoluteMode();
+          API_C3_setPtpMode();
           break;
           
       case 'r':
@@ -106,7 +107,7 @@ void loop()
           
       case 'p':
           Serial.println(F("Settings saved to flash"));
-          //  !!! API_C3_persistToFlash();
+          API_C3_saveConfig();
           break;
           
       case 't':
@@ -223,6 +224,9 @@ void printDataReport(HID_report_t * report)
     case ABSOLUTE_REPORT_ID:
         printCRQ_AbsoluteReport(report);   
         break;
+    case PTP_REPORT_ID:
+        printPtpReport(report);
+        break;
     default:
         Serial.println(F("Error: Unknown Report ID"));
   }
@@ -280,7 +284,7 @@ void printCRQ_AbsoluteReport(HID_report_t * report)
     Serial.print(F("    Palm Flags:\t0b"));
     Serial.println(report->abs.fingers[i].palm, BIN);
     Serial.print(F("    Valid:\t"));
-    // !!! Serial.println(API_C3_isFingerValid(report,i)? F("Yes"):F("No"));
+    Serial.println(API_C3_isFingerValid(report,i)? F("Yes"):F("No"));
     Serial.print(F("    (x,y):\t("));
     Serial.print(report->abs.fingers[i].x, DEC);
     Serial.print(F(","));
@@ -289,6 +293,30 @@ void printCRQ_AbsoluteReport(HID_report_t * report)
   }
   
   Serial.println();
+}
+
+void printPtpReport(HID_report_t * report)
+{
+  Serial.print(F("Report ID:\t0x"));
+  Serial.println(report->reportID, HEX);
+  Serial.print(F("Time:\t"));
+  Serial.println(report->ptp.timeStamp);
+  Serial.print(F("Contact ID:\t"));
+  Serial.println(report->ptp.contactID);
+  Serial.print(F("Confidence:\t")); //Microsoft says "Set when a contact is too large to be a finger" but that is backwards. It's clear if the object is too big.
+  Serial.println(report->ptp.confidence); 
+  Serial.print(F("Tip:\t"));// Set if the contact is on the surface of the digitizer, once this clears you know you have lift-off
+  Serial.println(report->ptp.tip);
+  Serial.print(F("X:\t"));
+  Serial.println(report->ptp.x);
+  Serial.print(F("Y:\t"));
+  Serial.println(report->ptp.y);
+  Serial.print(F("Buttons:\t"));
+  Serial.println(report->ptp.buttons);
+  Serial.print(F("Contact Count:\t"));
+  Serial.println(report->ptp.contactCount); //Total number of contacts to be reported in a given report
+  Serial.println();
+   
 }
 
 /**************************************************************/
@@ -301,6 +329,7 @@ void printCRQ_AbsoluteReport(HID_report_t * report)
 HID_report_t prevAbsReport_g;       /**< Most recent past CRQ_ABSOLUTE report */
 HID_report_t prevMouseReport_g;     /**< Most recent past Mouse report */
 HID_report_t prevKeyboardReport_g;  /**< Most recent past Keyboard report */
+HID_report_t prevPtpReport_g;
 
 /** Prints all the events that correspond to cur_report.
     Determines which printing function to use from the reportID */
@@ -320,6 +349,10 @@ void printEvent(HID_report_t* cur_report)
         printKeyboardEvents(cur_report, &prevKeyboardReport_g);
         prevKeyboardReport_g = *cur_report;
         break;
+    case PTP_REPORT_ID:
+        printPtpReportEvents(cur_report, &prevPtpReport_g);
+        prevPtpReport_g = *cur_report;
+        break;
     default:
         Serial.println(F("NOT VALID REPORT FOR EVENTS"));
         break;
@@ -335,6 +368,12 @@ void printMouseReportEvents(HID_report_t* cur_report, HID_report_t* prev_report)
     {
         printButtonEvents(cur_report, prev_report);
     }
+}
+
+void printPtpReportEvents(HID_report_t * cur_report, HID_report_t * prev_report)
+{
+  
+  // !!! todo, fill this out
 }
 
 /** Prints all Absolute events.
@@ -487,10 +526,10 @@ void printFingerEvents(HID_report_t* cur_report, HID_report_t* prev_report, uint
 void printContactEvents(HID_report_t* cur_report, HID_report_t* prev_report, uint8_t finger_num)
 {
     //finger is contacted now
-    if (1) // !!! (API_C3_isFingerContacted(cur_report, finger_num))
+    if (API_C3_isFingerContacted(cur_report, finger_num))
     {
         //it wasn't contacted before
-        if (1) // !!! (!API_C3_isFingerContacted(prev_report, finger_num))
+        if (!API_C3_isFingerContacted(prev_report, finger_num))
         {
             Serial.print(F("Finger "));
             Serial.print(finger_num);
@@ -501,7 +540,7 @@ void printContactEvents(HID_report_t* cur_report, HID_report_t* prev_report, uin
     else
     {
         //it was contacted before
-        if (1) // !!! (API_C3_isFingerContacted(prev_report, finger_num))
+        if (API_C3_isFingerContacted(prev_report, finger_num))
         {
             Serial.print(F("Finger "));
             Serial.print(finger_num);
@@ -516,10 +555,10 @@ void printContactEvents(HID_report_t* cur_report, HID_report_t* prev_report, uin
 void printFingerValidationEvents(HID_report_t* cur_report, HID_report_t* prev_report, uint8_t finger_num)
 {
     //finger is valid now
-    if (1) // !!! (API_C3_isFingerValid(cur_report, finger_num))
+    if (API_C3_isFingerValid(cur_report, finger_num))
     {
         //it wasn't valid before
-        if (1) // !!! (!API_C3_isFingerValid(prev_report, finger_num))
+        if (!API_C3_isFingerValid(prev_report, finger_num))
         {
             Serial.print(F("Finger "));
             Serial.print(finger_num);
@@ -530,7 +569,7 @@ void printFingerValidationEvents(HID_report_t* cur_report, HID_report_t* prev_re
     else
     {
         // it was valid before
-        if (1) // !!! (API_C3_isFingerValid(prev_report, finger_num))
+        if (API_C3_isFingerValid(prev_report, finger_num))
         {
             Serial.print(F("Finger "));
             Serial.print(finger_num);
@@ -575,7 +614,7 @@ void printButtonEvents(HID_report_t* cur_report, HID_report_t* prev_report)
         {
             Serial.print(F("Button "));
             Serial.print(i);
-            if (1) // !!! (API_C3_isButtonPressed(cur_report, mask))
+            if (API_C3_isButtonPressed(cur_report, mask))
             {
                 Serial.println(F(" Pressed"));
             }

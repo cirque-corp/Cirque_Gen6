@@ -214,23 +214,14 @@ bool API_C3_saveConfig(void);
 bool API_C3_restoreSavedConfig(void);
 bool API_C3_restoreFactoryConfig(void);
 
-
-/**********************************************************/
-
-// To do:
-//--------------------------------------------------
-
-// API_C3_persistToFlash()
-
-
-
-
-
-
+// for now these are a pass-through to the HID_reports code, they only work for CRQ_Absolute mode 
+bool API_C3_isFingerValid(HID_report_t* report, uint8_t finger_num);
+bool API_C3_isFingerContacted(HID_report_t* report, uint8_t finger_num);
+uint8_t API_C3_numberFingers(HID_report_t* report);
+bool API_C3_isButtonPressed(HID_report_t* report, uint8_t buttonMask);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif //API_C3_H
-

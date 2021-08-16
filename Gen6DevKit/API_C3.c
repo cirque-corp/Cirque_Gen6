@@ -255,23 +255,24 @@ void API_C3_forceComp(void)
 void API_C3_setCRQ_AbsoluteMode()
 {
 	uint8_t feedConfig4 = API_C3_readRegister(REG_FEED_CONFIG4);
-	feedConfig4 = 0x0C;
-	//feedConfig1 |= 0x03;	//this might be alps mode?
+  feedConfig4 &= 0xF3; // leave USB, PS2, and unused bits unchanged
+	feedConfig4 |= 0x0C; // set "advanced, absolute" for I2C
 	API_C3_writeRegister(REG_FEED_CONFIG4, feedConfig4);
 }
 
 void API_C3_setRelativeMode()
 {
 	uint8_t feedConfig4 = API_C3_readRegister(REG_FEED_CONFIG4);
-	feedConfig4 &= 0xF3;
+	feedConfig4 &= 0xF3; // leave USB, PS2, and unused bits unchanged
+  // I2C interface bits are clear, so "normal, relative" report mode
 	API_C3_writeRegister(REG_FEED_CONFIG4, feedConfig4);
 }
 
 void API_C3_setPtpMode()
 {
 	uint8_t feedConfig4 = API_C3_readRegister(REG_FEED_CONFIG4);
-	feedConfig4 &= 0xF7;
-	feedConfig4 |= 0x04;
+	feedConfig4 &= 0xF7; // leave USB, PS2, and unused bits unchanged
+	feedConfig4 |= 0x04; // set "normal, absolute" mode
 	API_C3_writeRegister(REG_FEED_CONFIG4, feedConfig4);
 }
 
@@ -343,15 +344,6 @@ void API_C3_enableScaling(void)
 	logicalScalar_flag &= ~0x08;
 	API_C3_writeRegister(REG_XY_CONFIG, logicalScalar_flag);
 }
-
-
-void API_C3_persistToFlash()
-{
-	// I think these are 0xC2DF equiv. is 0x20000820
-//    uint8_t persistentDataControl = API_C3_readRegister(0x20000820);  // read
-//    persistentDataControl |= 0x01;                                    // modify
-//    API_C3_writeRegister(0x20000820, persistentDataControl);          // write
-}    
 
 void API_C3_disableTracking()
 {
@@ -593,8 +585,22 @@ bool API_C3_restoreFactoryConfig(void)
 }
 
 
+bool API_C3_isFingerValid(HID_report_t* report, uint8_t finger_num)
+{
+  return HID_isFingerValid(report, finger_num);
+}
 
+bool API_C3_isFingerContacted(HID_report_t* report, uint8_t finger_num)
+{
+  return HID_isFingerContacted(report, finger_num);
+}
 
+uint8_t API_C3_numberFingers(HID_report_t* report)
+{
+  return HID_numberFingers(report);  
+}
 
-
-
+bool API_C3_isButtonPressed(HID_report_t* report, uint8_t buttonMask)
+{
+  return HID_isButtonPressed(report, buttonMask);
+}

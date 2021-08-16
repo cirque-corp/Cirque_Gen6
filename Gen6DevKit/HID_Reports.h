@@ -110,7 +110,7 @@ typedef struct
 	uint16_t y;
 	uint16_t timeStamp;
 	uint8_t  contactID;  //Uniquely identifies the contact within a given frame
-	uint8_t  confidence;  //Microsoft ways "Set when a contact is too large to be a finger" but that is backwards. It's clear if the object is too big.
+	uint8_t  confidence;  //Microsoft says "Set when a contact is too large to be a finger" but that is backwards. It's clear if the object is too big.
 	uint8_t  tip;   // Set if the contact is on the surface of the digitizer, once this clears you know you have lift-off
 	uint8_t  contactCount;  //Total number of contacts to be reported in a given report
 	uint8_t  buttons;
@@ -136,9 +136,9 @@ typedef struct
         CRQabsoluteReport_t abs;    	/**< Treats the data as an absolute report */
         AlpsAbsoluteReport_t alpsAbs;	/**< Treats the data as an absolute report */
         PtpReport_t 	ptp;			/**< Treats the data as a ptp report */
-		StickReport_t stick;			/**< Treats the data as a stick report */
+        StickReport_t stick;			/**< Treats the data as a stick report */
     };
-	uint16_t reportLength;
+    uint16_t reportLength;
     uint8_t reportID;   /**< ID of the report. Shows what type of report to use */
 } HID_report_t;
 
