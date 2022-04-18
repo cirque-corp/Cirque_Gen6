@@ -150,7 +150,14 @@ void loop()
           Serial.println(F("Event Printing turned off"));
           eventPrint_mode_g = false;
           break;
-      
+
+      case 'i':
+          Serial.println(F("Reading comp matrix"));
+          printCompMatrix();
+          break;
+          
+      case '\n' :
+        break;
       case '?':
       case 'h':
       case 'H':
@@ -625,8 +632,7 @@ void printButtonEvents(HID_report_t* cur_report, HID_report_t* prev_report)
         }
         
         mask <<= 1;
-    }
-    
+    } 
 }
 
 /** Initializes reports used for keeping track of state.
@@ -647,4 +653,38 @@ void initialize_saved_reports()
     {
         prevKeyboardReport_g.keyboard.keycode[i] = 0x0;
     }
+}
+
+void printCompMatrix(void)
+{
+  // This shows how to read the "compensation matrix" from the touchpad
+  uint8_t sizeX, sizeY;
+  uint16_t compNumberBytes;
+  // allocate the largest possible comp image, once you know the 
+  // comp size this could be made a smaller size (or dynamically allocated if your
+  // language supports it)
+  int16_t compImage[30 * 16]; 
+  uint16_t index;
+  // all of the sensorSize information will be fixed/consistent for a given project
+  // once you know the sizeX, sizeY, and compNumberBytes you could just hard-code
+  // all this and not bother to call this function
+  API_C3_sensorSize(&sizeX, &sizeY, &compNumberBytes);
+  Serial.print(F("Sensor X,Y = "));
+  Serial.print(sizeX);
+  Serial.print(",");
+  Serial.print(sizeY);
+  Serial.print(" bytes = ");
+  Serial.println(compNumberBytes);
+  // The compImage is a 1D array (row major ordered) that can be easily broken out into a 2D array
+  API_C3_readComp(compImage, compNumberBytes, 64);
+  index = 0;
+  while (index < (compNumberBytes / 2))
+  {
+    for (int x = 0; x < sizeX; x++)
+    {
+      Serial.print(compImage[index++]);
+      Serial.print(",");
+    }
+    Serial.println();
+  }
 }

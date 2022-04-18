@@ -214,6 +214,9 @@ bool API_C3_saveConfig(void);
 bool API_C3_restoreSavedConfig(void);
 bool API_C3_restoreFactoryConfig(void);
 
+void API_C3_sensorSize(uint8_t * sizeX, uint8_t * sizeY, uint16_t * compByteLength);
+void API_C3_readComp(int16_t * compMatrix, uint16_t compByteLength, uint16_t chunkSize);
+
 // for now these are a pass-through to the HID_reports code, they only work for CRQ_Absolute mode 
 bool API_C3_isFingerValid(HID_report_t* report, uint8_t finger_num);
 bool API_C3_isFingerContacted(HID_report_t* report, uint8_t finger_num);

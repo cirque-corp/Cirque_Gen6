@@ -25,6 +25,8 @@
 bool endianStateKnown = false;
 uint8_t endianState;
 
+void byteArrayToImage(uint8_t * byteArray, uint16_t byteLength, int16_t * imageArray);
+
 // Support functions
 
 // Check a configuration header to see if it is supported/valid
@@ -63,7 +65,7 @@ void API_C3_init(int32_t I2CFrequency, uint8_t I2CAddress)
 void API_C3_reinit(void)
 {
     // Clear any HID I2C reset response from a power-on reset
-	// HID reset will happen within 5 msec, so ever 1 msec
+	// HID reset will happen within 5 msec, so every 1 msec
     // check DR then read the report if you have it
 	// Other reports may also come in (but not likely)
 	for (int x = 0; x < 5; x++)
@@ -73,7 +75,7 @@ void API_C3_reinit(void)
 		{
 			// blindly read max packet size just to simplify this loop
 			uint8_t hid_packet[PROJECT_MAX_PACKET_SIZE];
-		   HB_readReport(hid_packet, PROJECT_MAX_PACKET_SIZE);
+			HB_readReport(hid_packet, PROJECT_MAX_PACKET_SIZE);
 		}
 	}
 	
@@ -255,7 +257,7 @@ void API_C3_forceComp(void)
 void API_C3_setCRQ_AbsoluteMode()
 {
 	uint8_t feedConfig4 = API_C3_readRegister(REG_FEED_CONFIG4);
-  feedConfig4 &= 0xF3; // leave USB, PS2, and unused bits unchanged
+	feedConfig4 &= 0xF3; // leave USB, PS2, and unused bits unchanged
 	feedConfig4 |= 0x0C; // set "advanced, absolute" for I2C
 	API_C3_writeRegister(REG_FEED_CONFIG4, feedConfig4);
 }
@@ -264,7 +266,7 @@ void API_C3_setRelativeMode()
 {
 	uint8_t feedConfig4 = API_C3_readRegister(REG_FEED_CONFIG4);
 	feedConfig4 &= 0xF3; // leave USB, PS2, and unused bits unchanged
-  // I2C interface bits are clear, so "normal, relative" report mode
+	// I2C interface bits are clear, so "normal, relative" report mode
 	API_C3_writeRegister(REG_FEED_CONFIG4, feedConfig4);
 }
 
@@ -584,6 +586,47 @@ bool API_C3_restoreFactoryConfig(void)
     return API_C3_SendConfigCommand(0x04, 10);
 }
 
+void API_C3_sensorSize(uint8_t * sizeX, uint8_t * sizeY, uint16_t * compByteLength)
+{
+  uint8_t lengthBytes[2];
+
+  *sizeX = API_C3_readRegister(0x2001080C);
+  *sizeY = API_C3_readRegister(0x2001080D);
+
+  HB_readExtendedMemory(0x30010000, lengthBytes, 2); // comp image length in bytes
+  *compByteLength = HID_reportLength(lengthBytes);
+}
+
+void byteArrayToImage(uint8_t * byteArray, uint16_t byteLength, int16_t * imageArray)
+{
+  uint16_t indexByte, indexPixel;
+
+  indexPixel = 0;
+  for (indexByte = 0; indexByte < byteLength; indexByte += 2)
+  {
+    if (API_C3_endianState() == BIG_ENDIAN)
+    {
+      // high byte at low address
+      imageArray[indexPixel++] = (byteArray[indexByte] << 8) | byteArray[indexByte + 1];
+    }
+    else
+    {
+      imageArray[indexPixel++] = byteArray[indexByte] | (byteArray[indexByte + 1] << 8);
+    }
+  }
+}
+
+void API_C3_readComp(int16_t * compMatrix, uint16_t compByteLength, uint16_t chunkSize)
+{
+  uint8_t rawData[compByteLength];
+
+  API_C3_disableComp();
+
+  API_C3_getMemoryContents(0x30010002, rawData, compByteLength, chunkSize);
+  byteArrayToImage(rawData, compByteLength, compMatrix);
+
+  API_C3_enableComp();
+}
 
 bool API_C3_isFingerValid(HID_report_t* report, uint8_t finger_num)
 {
