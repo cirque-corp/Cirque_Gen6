@@ -27,7 +27,23 @@ typedef struct
     uint16_t productId;        /**< HID PID */ 
     uint16_t versionId;        /**< HID version ID */ 
     uint32_t firmwareRevision; // Provides granular information about which firmware is running */
-} systemInfo_t;  
+} systemInfo_t;
+
+typedef enum
+{
+	QMVCHANNEL_UART = 0,
+	QMVCHANNEL_I2C = 1,
+	QMVCHANNEL_OFF = 0xFF
+} QMVChannelState;
+
+typedef enum
+{
+	QMV_PREDEMUX = 0,
+	QMV_POSTDEMUX = 1,
+	QMV_POSTCOMP = 2,
+	QMV_COMP = 3,
+	QMV_FACTORYCOMP = 4,
+} QMVChannelNumbers;
 
 /******************* IMPORTANT FUNCTIONS ******************/
 
@@ -148,12 +164,17 @@ void API_C3_disableScaling(void);
 void API_C3_enableLinearCorrection(void);
 void API_C3_disableLinearCorrection(void);
 
-/**
- * Enable QuickMeasView output
- * This only enables the post-demux, post-comp, and comp values for now
- * If more functionality is needed on this feature it can be added later
- */
-void API_C3_enableQMV(void);
+// Common channel numbers in QMVChannelNumbers enum
+void API_C3_SetQMVStream(uint8_t channelNumber, QMVChannelState state);
+// From: CoreFW/Includes/QuickMeasViewDataControl.h
+//QmvId_Image_PreDemux, // 0
+//QmvId_Image_PostDemux, // 1
+//QmvId_Image_PostComp, //2
+//QmvId_Image_Comp,  //3
+// ...
+	//QmvId_IdleDetect,  // 16
+//QmvId_IdleDetect_Accumulation,  // 17
+//QmvId_IdleDetect_MeasData, // 18
 
 /** This probably needs a better name
  *
@@ -182,6 +203,10 @@ void API_C3_disableComp(void);
  * returns true if the power management struct is initialized
  */
 bool API_C3_PowerManagement_isImplemented(void);
+
+void API_C3_setPowerSetting(uint8_t registerValue);
+void API_C3_setPowerCommand(uint8_t registerValue);
+
 /**
  * @ingroup PowerManagement
  * Sets the ms before touchpad enters idle

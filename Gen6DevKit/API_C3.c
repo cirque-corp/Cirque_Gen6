@@ -141,7 +141,7 @@ uint16_t API_C3_readRegister16(uint32_t address)
 
 uint32_t API_C3_readRegister32(uint32_t address)
 {
-	uint16_t result;
+	uint32_t result;
 	uint8_t buf[4];
 	HB_readExtendedMemory(address, buf, 4);
 
@@ -395,11 +395,11 @@ void API_C3_disableLinearCorrection(void)
 	API_C3_writeRegister(REG_FEED_CONFIG, feedConfig1);
 }
 
-void API_C3_enableQMV(void)
+void API_C3_SetQMVStream(uint8_t channelNumber, QMVChannelState state)
 {
-	uint8_t QMV_enableControl = API_C3_readRegister(0x20160408);
-	QMV_enableControl = 0x0E; //enable only the post-demux, post-comp, and comp values
-	API_C3_writeRegister(0x20160408,QMV_enableControl);
+	uint32_t address = 0x20160408 + channelNumber;
+	uint8_t registerValue = (state != QMVCHANNEL_OFF) ? (state | 0x80) : 0;
+	API_C3_writeRegister(address, registerValue);
 }
 
 bool API_C3_XYConfig_isImplemented()
@@ -467,6 +467,25 @@ bool API_C3_PowerManagement_isImplemented(void)
 {
 	return isValidHeader(0x200A0000);
 }
+
+void API_C3_setPowerSetting(uint8_t registerValue)
+{
+	//  Register Bits:
+	//	PowerSetting_DisableDeepSleep 0x01
+	//	PowerSetting_DisableIdleSleep 0x02
+	//	PowerSetting_DontWakeFromTouch 0x04
+	//	PowerSetting_DontWakeFromButton 0x08
+	API_C3_writeRegister(0x200A0010, registerValue);
+}
+
+void API_C3_setPowerCommand(uint8_t registerValue)
+{
+	//  Register Bits:
+	//	PowerCmd_ForceSleep 0x01
+	//	PowerCmd_CancelForceSleep 0x02
+	API_C3_writeRegister(0x200A0408, registerValue);
+}
+
 /**
  *
  * @param timeBeforeIdle_100ms given in 100 ms
