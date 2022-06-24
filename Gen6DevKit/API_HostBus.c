@@ -202,7 +202,7 @@ void HB_HID_Reset(void)
 	sendHidCommand(cmd, cmdLength, true);
 }
 
-void HB_HID_GetHidDescriptor(uint16_t HidDescAddr, uint8_t hidDesc[30])
+void HB_HID_GetHidDescriptor(uint16_t HidDescAddr, HIDDescriptor_t * hidDescriptor)
 { 
 	uint8_t hidDesc[30];
 	HB_HID_readRegister(HidDescAddr, hidDesc, 30);
