@@ -104,6 +104,12 @@ void loop()
           API_C3_readSystemInfo(&sysInfo);
           printSystemInfo(&sysInfo);
           break;
+
+      case 'g':
+          HIDDescriptor_t hidDescriptor;
+          HB_HID_GetHidDescriptor(0x0020, &hidDescriptor);
+          printHidDescriptor(&hidDescriptor);
+          break;
           
       case 'p':
           Serial.println(F("Settings saved to flash"));
@@ -214,6 +220,36 @@ void printSystemInfo(systemInfo_t* sysInfo)
   Serial.print(F("Version ID:\t"));
   Serial.println(sysInfo->versionId, HEX);
   Serial.println(F(""));
+}
+
+void printHidDescriptor(HIDDescriptor_t * hd)
+{
+  Serial.print(F("Hid Descriptor Length: \t"));
+  Serial.println(hd->wHIDDescLength);
+  Serial.print(F("bcd Version\t\t"));
+  Serial.println(hd->bcdVersion, HEX);
+  Serial.print(F("Report Desc Length\t"));
+  Serial.println(hd->wReportDescLength);
+  Serial.print(F("Report Desc Register\t"));
+  Serial.println(hd->wReportDescRegister);
+  Serial.print(F("Input Register\t\t"));
+  Serial.println(hd->wInputRegister);
+  Serial.print(F("Max Input Length\t"));
+  Serial.println(hd->wMaxInputLength);
+  Serial.print(F("Output Register\t\t"));
+  Serial.println(hd->wOutputRegister);
+  Serial.print(F("Max Output Length\t"));
+  Serial.println(hd->wMaxOutputLength);
+  Serial.print(F("Command Register\t"));
+  Serial.println(hd->wCommandRegister);
+  Serial.print(F("Data Register\t\t"));
+  Serial.println(hd->wDataRegister);
+  Serial.print(F("VID\t\t"));
+  Serial.println(hd->wVendorID, HEX);
+  Serial.print(F("PID\t\t"));
+  Serial.println(hd->wProductID, HEX);
+  Serial.print(F("Version\t\t"));
+  Serial.println(hd->wVersionID, HEX);
 }
 
 /** Prints the information stored in a HID_report_t struct to serial */
