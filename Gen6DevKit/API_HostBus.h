@@ -19,6 +19,24 @@ extern "C" {
 
 #define CIRQUE_HID_COMMAND_REGISTER 0x0005
 
+typedef struct
+{
+    uint16_t wHIDDescLength;
+    uint16_t bcdVersion;
+    uint16_t wReportDescLength;
+    uint16_t wReportDescRegister;
+    uint16_t wInputRegister;
+    uint16_t wMaxInputLength;
+    uint16_t wOutputRegister;
+    uint16_t wMaxOutputLength;
+    uint16_t wCommandRegister;
+    uint16_t wDataRegister;
+    uint16_t wVendorID;
+    uint16_t wProductID;
+    uint16_t wVersionID;
+    uint32_t Reserved;
+} HIDDescriptor_t;
+
 /************************************************************/
 /************************************************************/
 /********************  PUBLIC FUNCTIONS *********************/
@@ -40,7 +58,7 @@ uint8_t HB_readExtendedMemory(uint32_t, uint8_t *, uint16_t);
 
 void HB_writeExtendedMemory(uint32_t, uint8_t *, uint8_t);
 
-void HB_HID_GetHidDescriptor(uint16_t HidDescAddr, uint8_t hidDesc[30]);
+void HB_HID_GetHidDescriptor(uint16_t HidDescAddr, HIDDescriptor_t * hidDescriptor);
 void HB_HID_SetPower(bool powerOn);
 void HB_HID_Reset(void);
 void HB_HID_readRegister(uint16_t hidRegister, uint8_t * buffer, uint16_t readLength);

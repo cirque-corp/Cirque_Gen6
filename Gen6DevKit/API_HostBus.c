@@ -204,7 +204,23 @@ void HB_HID_Reset(void)
 
 void HB_HID_GetHidDescriptor(uint16_t HidDescAddr, uint8_t hidDesc[30])
 { 
-  HB_HID_readRegister(HidDescAddr, hidDesc, 30);
+	uint8_t hidDesc[30];
+	HB_HID_readRegister(HidDescAddr, hidDesc, 30);
+	// hid descriptor is little endian
+    hidDescriptor->wHIDDescLength = (uint16_t)(hidDesc[0] + (hidDesc[1] << 8));
+    hidDescriptor->bcdVersion = (uint16_t)(hidDesc[2] + (hidDesc[3] << 8));
+    hidDescriptor->wReportDescLength = (uint16_t)(hidDesc[4] + (hidDesc[5] << 8));
+    hidDescriptor->wReportDescRegister = (uint16_t)(hidDesc[6] + (hidDesc[7] << 8));
+    hidDescriptor->wInputRegister = (uint16_t)(hidDesc[8] + (hidDesc[9] << 8));
+    hidDescriptor->wMaxInputLength = (uint16_t)(hidDesc[10] + (hidDesc[11] << 8));
+    hidDescriptor->wOutputRegister = (uint16_t)(hidDesc[12] + (hidDesc[13] << 8));
+    hidDescriptor->wMaxOutputLength = (uint16_t)(hidDesc[14] + (hidDesc[15] << 8));
+    hidDescriptor->wCommandRegister = (uint16_t)(hidDesc[16] + (hidDesc[17] << 8));
+    hidDescriptor->wDataRegister = (uint16_t)(hidDesc[18] + (hidDesc[19] << 8));
+    hidDescriptor->wVendorID = (uint16_t)(hidDesc[20] + (hidDesc[21] << 8));
+    hidDescriptor->wProductID = (uint16_t)(hidDesc[22] + (hidDesc[23] << 8));
+    hidDescriptor->wVersionID = (uint16_t)(hidDesc[24] + (hidDesc[25] << 8));
+    hidDescriptor->Reserved = (uint32_t)(hidDesc[26] + (hidDesc[27] << 8) + (hidDesc[28] << 16) + (hidDesc[29] << 24));
 }
 
 void HB_HID_readRegister(uint16_t hidRegister, uint8_t * buffer, uint16_t readLength)
