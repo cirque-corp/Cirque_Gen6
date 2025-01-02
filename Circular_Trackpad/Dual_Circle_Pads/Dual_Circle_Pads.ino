@@ -6,6 +6,18 @@
 #include "HID_Reports.h"
 #include "I2C.h"
 
+// This code is built for the GlidePoint Development Kit (cirque.com), PCB 02-000620-00 Rev A02, Assembly A0-000194-00 Rev A02
+// The kit uses a Teensy 4.0 as the host, talking to two touchpads.
+// This demo is for the Gen6 touchpads, which are typically 23 mm and 35 mm circle sensors
+// but any Gen6 touchpad should work
+
+// This "dual host" interface uses these pins:
+// Touchpad #1 - connects to J7 - 23mm 
+// IO18_SDA, IO19_SCL, IO9_DR0
+
+// Touchpad #2 - connects to J9 - 35 mm
+// IO17_SDA1, IO16_SCL1, IO7_DR1
+
 // void printMouseReport(HID_report_t * report);
 
 bool dataPrint_mode_g = true;  /** < toggle for printing out data > */
@@ -23,7 +35,7 @@ void setup()
   // initialize i2c connection at 400kHz 
   API_C3_init(PROJECT_I2C_FREQUENCY, ALPS_I2C_ADDR, PROJECT_I2C_FREQUENCY, ALPS_I2C_ADDR); 
 
-  Serial.println("I2C initiated");
+  Serial.println("I2C initiatized");
 
   uint8_t i2c_error = i2cPing(0, ALPS_I2C_ADDR);
 
@@ -652,13 +664,13 @@ uint8_t i2cPing(uint8_t channel, uint8_t i2cAddr)
 
   // The i2c_scanner uses the return value of
   // the Write.endTransmisstion to see if
-  // a device did acknowledge to the address.
+  // a device did acknowledge being addressed.
   I2C_beginTransmission(channel, i2cAddr);
   error = I2C_endTransmission(channel, true);
 
   if (error == 0)
   {
-    Serial.print("I2C device found at address 0x");
+    Serial.print("I2C device responded at address 0x");
     if (i2cAddr<16) 
       Serial.print("0");
     Serial.print(i2cAddr,HEX);
@@ -666,7 +678,7 @@ uint8_t i2cPing(uint8_t channel, uint8_t i2cAddr)
   }
   else 
   {
-    Serial.print("Unknown error at address 0x");
+    Serial.print("I2C error occurred at address 0x");
     if (i2cAddr<16) 
       Serial.print("0");
     Serial.print(i2cAddr,HEX);

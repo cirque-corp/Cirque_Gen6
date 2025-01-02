@@ -55,9 +55,9 @@ void API_C3_init(int32_t I2CFrequency_0, uint8_t I2CAddress_0, int32_t I2CFreque
 
 void API_C3_reinit(void)
 {
-    // Clear any HID I2C reset response from a power-on reset
+  // Clear any HID I2C reset response from a power-on reset
   // HID reset will happen within 5 msec, so every 1 msec
-    // check DR then read the report if you have it
+  // check DR then read the report if you have it
   // Other reports may also come in (but not likely)
   for (int x = 0; x < 5; x++)
   {

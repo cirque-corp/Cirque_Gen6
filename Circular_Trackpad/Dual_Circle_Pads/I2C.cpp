@@ -4,11 +4,20 @@
 #include "Project_Config.h"
 #include <Wire.h>
 #include <utility\twi.h>
-//#include <i2c_t3.h>
 
 #if BUFFER_LENGTH < 53
-#error BUFFER_LENGTH must be at least 53 for I2C_HID serial to work correctly. Go to \Program Files (x86)\Arduino\hardware\arduino\avr\libraries\Wire\src\Chan.h
-#error BUFFER_LENGTH must be at least 53 for I2C_HID serial to work correctly. Go to \Program Files (x86)\Arduino\hardware\teensy\avr\libraries\Wire\Chan.h
+// Unfortuantely, the Arduino I2C code uses a fixed 32 byte buffer for I2C communications. 
+// You will need to change that since HID and PTP touchpads require longer packet lengths.
+// If you are using the new Arduino IDE - 2.x or above, you can find the source in your Arduino15 directory
+// Arduino IDE 2.x - find your Arduino15 directory, then find and edit the files
+// Finding Arduino15 -->  https://support.arduino.cc/hc/en-us/articles/360018448279-Open-the-Arduino15-folder
+//      \Arduino15\packages\arduino\hardware\avr\1.8.6\libraries\Wire\src\Wire.h
+//      \Arduino15\packages\teensy\hardware\avr\1.59.0\libraries\Wire\Wire.h
+//      \Arduino15\packages\teensy\hardware\avr\1.59.0\libraries\Wire\WireKinetis.h
+//      \Arduino15\packages\teensy\hardware\avr\1.59.0\libraries\Wire\WireIMXRT.h
+// Arduino IDE 1.x - follow the path in the error message
+#error BUFFER_LENGTH must be at least 53 for I2C_HID serial to work correctly. Go to \Program Files (x86)\Arduino\hardware\teensy\avr\libraries\Wire\Wire.h
+#error BUFFER_LENGTH must be at least 53 for I2C_HID serial to work correctly. Go to \Program Files (x86)\Arduino\hardware\arduino\avr\libraries\Wire\src\Wire.h
 #error BUFFER_LENGTH must be at least 53 for I2C_HID serial to work correctly. Go to \Program Files (x86)\Arduino\hardware\teensy\avr\libraries\Wire\WireIMXRT.h
 #error BUFFER_LENGTH must be at least 53 for I2C_HID serial to work correctly. Go to \Program Files (x86)\Arduino\hardware\teensy\avr\libraries\Wire\WireKinetis.h
 #endif
@@ -16,6 +25,12 @@
 // #define TWI_BUFFER_LENGTH 64
 
 #if TWI_BUFFER_LENGTH < 53
+// See above note -
+// Arduino IDE 2.x - find your Arduino15 directory, then find and edit the files
+// Finding Arduino15 -->  https://support.arduino.cc/hc/en-us/articles/360018448279-Open-the-Arduino15-folder
+//      \Arduino15\packages\arduino\hardware\avr\1.8.6\libraries\Wire\src\utility\twi.h
+//      \Arduino15\packages\teensy\hardware\avr\1.59.0\libraries\Wire\utility\twi.h
+// Arduino IDE 1.x - follow the path in the error message
 #error TWI_BUFFER_LENGTH must be at least 53 for I2C_HID serial to work correctly. Go to \Program Files (x86)\Arduino\hardware\arduino\avr\libraries\Wire\src\utility\twi.h
 #error TWI_BUFFER_LENGTH must be at least 53 for I2C_HID serial to work correctly. Go to \Program Files (x86)\Arduino\hardware\teensy\avr\libraries\Wire\utility\twi.h
 #endif
