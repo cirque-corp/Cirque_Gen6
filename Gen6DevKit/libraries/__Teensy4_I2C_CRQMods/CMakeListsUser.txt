@@ -1,0 +1,6 @@
+# Make tests visible to CLion.
+# Use CLion's "Mark directory as" option to mark the "test" directory as a source folder.
+FILE(GLOB_RECURSE SRC_LIST
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/*.*
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/*.*
+)
