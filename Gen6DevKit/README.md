@@ -28,7 +28,7 @@ see the tag "Teensy3.2_Final" for the code.
 
 Code description and installation instructions are at:
 
-	www.cirque.com/documentation
+  www.cirque.com/documentation
 	
-		GP-AN-251013 Gen6 Sample Code
+  * GP-AN-251013 Gen6 Sample Code
 
