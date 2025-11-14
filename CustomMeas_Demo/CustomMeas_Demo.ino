@@ -1,241 +1,72 @@
-#include "API_CustomMeas.h"
-#include "MeasurementConfigs.h"
-#include <i2c_t3.h> // Only including this for the buffer size check below. It is not needed in this scope otherwise
+// Copyright (c) 2018 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
 
-#if (I2C_TX_BUFFER_LENGTH < (MAX_I2C_BYTES + 1) || I2C_RX_BUFFER_LENGTH < (MAX_I2C_BYTES + 1))
-#error I2C_TX_BUFFER_LENGTH and I2C_RX_BUFFER_LENGTH must both be set to at least MAX_I2C_BYTES + 1 (326 at the time this was message was written) \
-Go to \Arduino\hardware\teensy\avr\libraries\i2c_t3\i2c_t3.h and change the #defines to 326 or greater
+#include "I2C.h"
+#include <Wire.h>
+#include <utility\twi.h>
+//#include <i2c_t3.h>
+
+#if BUFFER_LENGTH < 53
+#error BUFFER_LENGTH must be at least 53 for I2C_HID serial to work correctly. Go to \Program Files (x86)\Arduino\hardware\arduino\avr\libraries\Wire\src\Wire.h
+#error BUFFER_LENGTH must be at least 53 for I2C_HID serial to work correctly. Go to \Program Files (x86)\Arduino\hardware\teensy\avr\libraries\Wire\Wire.h
+#error BUFFER_LENGTH must be at least 53 for I2C_HID serial to work correctly. Go to \Program Files (x86)\Arduino\hardware\teensy\avr\libraries\Wire\WireIMXRT.h
+#error BUFFER_LENGTH must be at least 53 for I2C_HID serial to work correctly. Go to \Program Files (x86)\Arduino\hardware\teensy\avr\libraries\Wire\WireKinetis.h
 #endif
 
-#define PWR_EN_PIN  1
-#define I2C_BIT_RATE      (1400000) // 1.4MHz will result in ~1MHz due to some error in the i2c_t3.h library
+#if TWI_BUFFER_LENGTH < 53
+#error TWI_BUFFER_LENGTH must be at least 53 for I2C_HID serial to work correctly. Go to \Program Files (x86)\Arduino\hardware\arduino\avr\libraries\Wire\src\utility\twi.h
+#error TWI_BUFFER_LENGTH must be at least 53 for I2C_HID serial to work correctly. Go to \Program Files (x86)\Arduino\hardware\teensy\avr\libraries\Wire\utility\twi.h
+#endif
 
-void setup()
+/************************************************************/
+/************************************************************/
+/********************  PUBLIC FUNCTIONS *********************/
+
+/** Set the Arduino as a master if no address is given and sets clock frequency. */
+void I2C_init(uint32_t clockFrequency)
 {
-  pinMode(PWR_EN_PIN, OUTPUT);    //Reset Power to Olympus
-  digitalWrite(PWR_EN_PIN, LOW);
-  delay(100);
-  digitalWrite(PWR_EN_PIN, HIGH);
-  delay(100);
-
-  Serial.begin(115200);
-
-  API_CustomMeas_Init( 0x2C, I2C_BIT_RATE, MeasurementResultsCallback);
-
-  PrintCommands();
+  Wire.begin();                   // Set the arduino as master.
+  Wire.setClock(clockFrequency);  // call .setClock after .begin
 }
 
-void loop()
+/** request the number of bytes specified by "count" from the given slave address
+ * specified by "address". After transfer of data, set boolean "stop" as true to 
+ * release the line. false will keep the line busy to send a restart. */
+uint32_t I2C_request(uint8_t address, uint32_t count, bool stop)
 {
-  API_CustomMeas_Process();
-
-  if(Serial.available())
-  {
-    char rxChar = Serial.read();
-
-    switch(rxChar)
-    {
-      case 'g':
-        API_CustomMeas_StartMeas();
-        Serial.println("Started...");
-        break;
-      case 's':
-        API_CustomMeas_StopMeas();
-        Serial.println("Stopped...");
-        break;
-      case 'b':
-        CustomMeasGlobalInfo_t temp;
-        API_CustomMeas_ReadGlobalInfo(&temp);
-        Serial.println("GlobalInfo");
-        PrintGlobalInfo(&temp);
-        break;
-      case 'c':
-        if(Serial.available())
-        {
-          char ascii[2];
-          ascii[0] = Serial.read();
-          ascii[1] = 0; //null terminate string
-          int groupIndex = atoi((char*)&ascii);
-          API_CustomMeas_Calibrate(groupIndex);
-          Serial.printf("Calibrated group %d!\n", groupIndex);
-        }
-        else
-        {
-          Serial.println("Error: Group number required!");
-        }
-        break;
-      case 'n':
-        for(int i =0; i < 5; i++) //TODO: NUM MAX_NUM_GROUPS
-        {
-          CustomMeasGroupInfo_t temp;
-          API_CustomMeas_ReadGroupInfo(i, &temp);
-          Serial.printf("Group Info [%d]\n", i);
-          PrintGroupInfo(&temp);
-        }
-        break;
-      case 'm':
-        for(int i =0; i < 10; i++) //TODO: NUM MAX_NUM_GROUPS
-        {
-          CustomMeasInfo_t temp;
-          API_CustomMeas_ReadMeasInfo(i, &temp);
-          Serial.printf("Measurement Config Info [%d]\n", i);
-          PrintMeasurementInfo(&temp);
-        }
-        break;
-      case 'l':
-        PrintCommands();
-        break;
-      case 'p':
-        API_CustomMeas_Persist();
-        Serial.println("CustomMeas Configs saved to flash");
-        break;
-      case 'r':
-        API_CustomMeas_Restore();
-        Serial.println("CustomMeas Configs restored from flash");
-        break;
-      case 'i':
-        WriteAllInfo();
-        Serial.println("All Global, Group, and Measurement info written");
-        break;
-      case 'v':
-        SystemInfo_t sysInfo;
-        API_CustomMeas_ReadVersionInfo(&sysInfo);
-        PrintFirmwareVersionInfo(&sysInfo);
-        break;
-      case '\r':
-        break;  // ignore carriage-return
-      case '\n':
-        break;  // ignore line-feed
-      default:
-        Serial.println("Invalid Command!");
-        PrintCommands();
-        break;
-    }
-  }
+  return (uint32_t)Wire.requestFrom((int16_t)address, (int16_t)count, stop);
 }
 
-static void MeasurementResultsCallback(int16_t* pResultsArray, uint16_t numResults)
+/** Returns the number of bytes available for reading. */
+uint32_t I2C_available()
 {
-  Serial.printf("Results[%d]:[", numResults);
-  for(int i = 0; i < numResults; i++)
-  {
-    Serial.printf("\t%d,", pResultsArray[i]);
-  }
-  Serial.println("]");
+  return Wire.available();
 }
 
-static void PrintCommands()
+/** returns the next byte. (Reads a byte that was transmitted from slave 
+	device to a master). */
+uint8_t I2C_read()
 {
-  Serial.println("Supported Commands:");
-  Serial.println("'g' - start measurements");
-  Serial.println("'s' - stop measurements");
-  Serial.println("'c<group_index>' - calibrate measurements for a group. eg.'c0' Values greater than 4 calibrates all groups");
-
-  Serial.println("'b' - read global info");
-  Serial.println("'n' - read all group info");
-  Serial.println("'m' - read all measurement info");
-  Serial.println("'i' - write all global, group, and measurement info");
-
-  Serial.println("'p' - persist measurement info to flash");
-  Serial.println("'r' - restore measurement info from flash");
-
-  Serial.println("'v' - read firmware version info");
-  
-  Serial.println("'l' - list commands");
+  return Wire.read();
 }
 
-static void PrintGlobalInfo(CustomMeasGlobalInfo_t* pGlobalInfo)
+/** returns the number of bytes written. Writes data from a slave device 
+	from a request form a master. */
+uint8_t I2C_write(uint8_t data)
 {
-  Serial.printf("\tEnable = %d\n\tFrameMillis = %d\n\tPOR_Enable = %d\n\tLowPowerMode = %d\n",
-                pGlobalInfo->Enable,
-                pGlobalInfo->FrameMillisLSB | pGlobalInfo->FrameMillisMSB << 8,
-                pGlobalInfo->POR_Enable,
-                pGlobalInfo->LowPowerMode);
-}
-static void PrintGroupInfo(CustomMeasGroupInfo_t* pGroupInfo)
-{
-  //TODO: Display detailed information about the bits
-  Serial.printf("\tMode = %d\n\tCalibration = 0x%X\n",
-                pGroupInfo->Mode,
-                pGroupInfo->Calibration);
+  return Wire.write(data);
 }
 
-static void ConvertElectrodeStatesToAsciiString(uint8_t* electrodeStates, char* outAscii)
+/** Begins the transmission to a I2C slave device with the given address. */
+void I2C_beginTransmission(uint8_t address)
 {
-  int outArrayIndex = 0;
-  for(int i = 0; i < 24; i++)
-  {
-    outAscii[outArrayIndex++] = (electrodeStates[i] & 0xF) + '0';
-    outAscii[outArrayIndex++] = ((electrodeStates[i] >> 4) & 0xF) + '0';
-  }
-  outAscii[outArrayIndex] = 0; //null terminate
+  Wire.beginTransmission(address);
 }
 
-static int ConvertChannelOffsetToDecimal(uint8_t channelOffset)
+/** Ends the transmission to a slave deivce that was begun by the begin transmission. 
+	Boolean "stop" if true, sends a stop condiction, releasing the bus. If false, 
+	sends a restart request, keeping the connection active. */
+i2c_status_t I2C_endTransmission(bool stop)
 {
-  int sign = channelOffset >> 3;
-  return channelOffset & 0x7 * sign;
+  return (i2c_status_t)Wire.endTransmission(stop);
 }
 
-static void ConvertChannelOffsetsToAsciiString(uint8_t* channelOffsets, char* outAscii)
-{
-  int outArrayIndex = 0;
-  for(int i = 0; i < 8; i++)
-  {
-    int value1 = ConvertChannelOffsetToDecimal(channelOffsets[i] & 0xF);
-    int value2 = ConvertChannelOffsetToDecimal((channelOffsets[i] >> 4) & 0xF);
-    outArrayIndex += sprintf(outAscii + outArrayIndex, "%d, %d, ", value1, value2);
-  }
-}
-
-static void PrintMeasurementInfo(CustomMeasInfo_t* pMeasInfo)
-{
-  char asciiElectrodeStatesString[50];
-  char asciiChannelOffsetsString[50];
-  ConvertElectrodeStatesToAsciiString(pMeasInfo->ElectrodeStates, asciiElectrodeStatesString);
-  ConvertChannelOffsetsToAsciiString(pMeasInfo->ChannelOffsets, asciiChannelOffsetsString);
-  Serial.printf("\tIsEnabled = %s\tGroupIndex = %d\n\tElectrodeStates = %s\n\tGain = %d\n\tGlobalOffset = %d\n\tChannelOffsetMult. = %d\n\tChannelOffsets = %s\n\tToggleFrequency = %d\n\tApertureLength = %d\n\tWaveform = %d\n\tADCChannelMask = 0x%X\n",
-                  (pMeasInfo->Control >> 7)? "true": "false",
-                  pMeasInfo->Control & 0x7F,
-                  asciiElectrodeStatesString,
-                  pMeasInfo->Gain,
-                  ((pMeasInfo->GlobalOffset & 0x80)? -1 : 1) * (pMeasInfo->GlobalOffset & 0x7F) ,
-                  pMeasInfo->ChannelOffsetMultiplier,
-                  asciiChannelOffsetsString,
-                  pMeasInfo->ToggleFrequency,
-                  pMeasInfo->ApertureLength,
-                  pMeasInfo->Waveform,
-                  pMeasInfo->ADCChannelMaskLSB | pMeasInfo->ADCChannelMaskMSB << 8
-                );
-}
-
-static void WriteAllInfo()
-{
-  API_CustomMeas_WriteGlobalInfo(&GlobalInfo);
-  for(int groupIndex = 0; groupIndex < 5; groupIndex++)
-  {
-    API_CustomMeas_WriteGroupInfo(groupIndex, &(GroupInfoArray[groupIndex]));
-  }
-  for(int measIndex = 0; measIndex < 10; measIndex++)
-  {
-    API_CustomMeas_WriteMeasInfo(measIndex, &(MeasInfoArray[measIndex]));
-  }
-}
-
-static void PrintFirmwareVersionInfo(SystemInfo_t * sysInfo)
-{
-  Serial.printf("HardwareID:\t0x%02X\r\n", sysInfo->HardwareID);
-  Serial.printf("FirmwareID:\t0x%02X\r\n", sysInfo->FirmwareID);
-  Serial.printf("VendorID:\t0x%04X\r\n", (sysInfo->VendorID_MSB << 8) | sysInfo->VendorID_LSB);
-  Serial.printf("ProductID:\t0x%04X\r\n", (sysInfo->ProductID_MSB << 8) | sysInfo->ProductID_LSB);
-  Serial.printf("VersionID:\t0x%04X\r\n", (sysInfo->VersionID_MSB << 8) | sysInfo->VersionID_LSB);
-
-  firmwareRevInfo_t firmwareInfo;
-
-  API_CustomMeas_FirmwareRevBytes_To_FirmwareRevInfo(&sysInfo->FirmwareRevision_B0, &firmwareInfo);
-
-  Serial.printf("Firmware Rev:\t%d, %s, %s (0x%08X)\r\n", firmwareInfo.SvnRevision,
-                                                          firmwareInfo.IsDirty ? "Dirty" : "Clean",
-                                                          firmwareInfo.IsBranch ? "Branch" : "Trunk",
-                                                          firmwareInfo.RevisionRegister);
-}
