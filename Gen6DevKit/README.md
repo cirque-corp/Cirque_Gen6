@@ -1,6 +1,6 @@
 # Gen6 Sample Code
 
-Copyright (c) 2021 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
+Copyright (c) 2025 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
 
 (Initial Release)
 
@@ -12,11 +12,11 @@ code:
  
 * libraries
 	
-  * Arduino libraries for Gen6 Touchpads, CustomMeas, and I2C on the Teensy4.0
+  * Arduino libraries for Gen6 Touchpads, CustomMeas, and I2C on the Teensy 4.0
 		
 * CirqueCustomMeasDemo
 	
-  * Demo app showing how to use CustomMeas device
+  * Demo app showing how to use a CustomMeas device
 	
 * CirqueGen6Demo
 
