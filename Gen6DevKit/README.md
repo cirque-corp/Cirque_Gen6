@@ -10,10 +10,6 @@ This directory contains sample code (c and C++) that demonstrate Cirque's
 Gen6 touchpad and CustomMeas solutions. There are three parts to this sample
 code:
  
-* libraries
-	
-  * Arduino libraries for Gen6 Touchpads, CustomMeas, and I2C on the Teensy 4.0
-		
 * CirqueCustomMeasDemo
 	
   * Demo app showing how to use a CustomMeas device
@@ -22,6 +18,10 @@ code:
 
   * Demo app showing how to use a touchpad
 
+* libraries (up a directory level)
+	
+  * Arduino libraries for Gen6 Touchpads, CustomMeas, and I2C on the Teensy 4.0
+		
 These projects run on the Cirque Blue Board, PCB# 02-000658-00 Rev E01 or later, with a 
 Teensy 4.0 on-board. If you have a prior version of that board (Rev C03 or earlier)
 see the tag "Teensy3.2_Final" for the code.
