@@ -1,15 +1,13 @@
 # Gen 6 Circle Sensor Dev Kit
 
-Copyright (c) 2023 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
-
-(Initial Release)
+Copyright (c) 2025 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
 
 ### Overview
 
 This directory contains a sample program that demonstrates the usage of Cirque's
 Gen6 touchpad solutions with a Teensy 4.0 development board acting as the host.
 
-This project is intended to run on the Cirque 02-000620-00 PCB, with a 
+This project is intended to run on the Cirque 02-000620-00 Rev A02 (or later) PCB, with a 
 Teensy 4.0 on-board.
 
 This project presents how to read and interpret data from the Gen6 touchpads. 
