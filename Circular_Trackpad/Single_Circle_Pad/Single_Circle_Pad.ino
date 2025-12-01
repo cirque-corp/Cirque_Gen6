@@ -23,11 +23,12 @@ void setup()
   // initialize i2c connection at 400kHz 
   API_C3_init(PROJECT_I2C_FREQUENCY, ALPS_I2C_ADDR); 
 
-  Serial.println("I2C initiated");
+  Serial.println(F("Single Pad Demo"));
+  Serial.println(F("I2C initiated"));
 
   uint8_t i2c_error = i2cPing(ALPS_I2C_ADDR);
 
-  Serial.print("ALPS_I2C_ADDR ping response: ");
+  Serial.print(F("ALPS_I2C_ADDR ping response: "));
   Serial.println(i2c_error,HEX);
   
   delay(50);                 //delay before reading registers after startup
@@ -221,15 +222,15 @@ void printHelpTable()
 void printSystemInfo(systemInfo_t* sysInfo)
 {
   Serial.println(F("System Information"));
-  Serial.print(F("Hardware ID:\t"));
+  Serial.print(F("Hardware ID:\t0x"));
   Serial.println(sysInfo->hardwareId, HEX);
-  Serial.print(F("Firmware ID:\t"));
+  Serial.print(F("Firmware ID:\t0x"));
   Serial.println(sysInfo->firmwareId, HEX);
-  Serial.print(F("Vendor ID:\t"));
+  Serial.print(F("Vendor ID:\t0x"));
   Serial.println(sysInfo->vendorId, HEX);
-  Serial.print(F("Product ID:\t"));
+  Serial.print(F("Product ID:\t0x"));
   Serial.println(sysInfo->productId, HEX);
-  Serial.print(F("Version ID:\t"));
+  Serial.print(F("Version ID:\t0x"));
   Serial.println(sysInfo->versionId, HEX);
   Serial.println(F(""));
 }
@@ -238,7 +239,7 @@ void printHidDescriptor(HIDDescriptor_t * hd)
 {
   Serial.print(F("Hid Descriptor Length: \t"));
   Serial.println(hd->wHIDDescLength);
-  Serial.print(F("bcd Version\t\t"));
+  Serial.print(F("bcd Version\t\t0x"));
   Serial.println(hd->bcdVersion, HEX);
   Serial.print(F("Report Desc Length\t"));
   Serial.println(hd->wReportDescLength);
@@ -256,11 +257,11 @@ void printHidDescriptor(HIDDescriptor_t * hd)
   Serial.println(hd->wCommandRegister);
   Serial.print(F("Data Register\t\t"));
   Serial.println(hd->wDataRegister);
-  Serial.print(F("VID\t\t"));
+  Serial.print(F("VID\t\t0x"));
   Serial.println(hd->wVendorID, HEX);
-  Serial.print(F("PID\t\t"));
+  Serial.print(F("PID\t\t0x"));
   Serial.println(hd->wProductID, HEX);
-  Serial.print(F("Version\t\t"));
+  Serial.print(F("Version\t\t0x"));
   Serial.println(hd->wVersionID, HEX);
 }
 

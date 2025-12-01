@@ -1,5 +1,7 @@
 // Copyright (c) 2019 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
 
+// You must select something containing "Serial" from the "Tools > USB Type" menu.
+
 #include "API_C3_BL.h"
 #include "Gen6_BL.h"
 #include "I2C.h"
@@ -43,17 +45,17 @@ void loop()
                 PrintCommands();
                 break;
             case 'p':
-                Test_Gen6_Program_9902();
+                Test_Gen6_Program_FW0();
                 break;
             case 'r':
-                Test_Gen6_Program_0202();
+                Test_Gen6_Program_FW1();
                 break;
             case '\r':
                 break;  // ignore carriage-return
             case '\n':
                 break;  // ignore line-feed
             default:
-                Serial.println("Invalid Command!");
+                Serial.println(F("Invalid Command!"));
                 PrintCommands();
                 break;
         }
@@ -62,11 +64,11 @@ void loop()
 
 static void PrintCommands()
 {
-    Serial.println("Cirque Bootloader Host Application Demo");
-    Serial.println("Supported Commands:");
-    Serial.println("'g' - Get hardware ID");
-    Serial.println("'s' - Get bootloader status");
-    Serial.println("'p' - Program firmware 99:02");
-    Serial.println("'r' - Program firmware 02:02");
-    Serial.println("'l' - list commands\n");
+    Serial.println(F("Cirque Bootloader Host Application Demo"));
+    Serial.println(F("Supported Commands:"));
+    Serial.println(F("'g' - Get hardware ID"));
+    Serial.println(F("'s' - Get bootloader status"));
+    Serial.println(F("'p' - Program firmware FW0"));
+    Serial.println(F("'r' - Program firmware FW1"));
+    Serial.println(F("'l' - list commands\n"));
 }

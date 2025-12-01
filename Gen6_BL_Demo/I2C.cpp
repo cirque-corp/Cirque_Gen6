@@ -1,16 +1,17 @@
 // Copyright (c) 2018 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
 
-#include <i2c_t3.h>
+//#include <i2c_t3.h>
 #include "I2C.h"
+#include "i2c_driver_wire.h"
+//#define BUFFER_LENGTH Wire.rx_buffer_length
 
-#if I2C_TX_BUFFER_LENGTH < 1026
-#error I2C_TX_BUFFER_LENGTH must be at least 1026 for I2C_HID_Serial to work correctly. Go to \Program Files (x86)\Arduino\hardware\teensy\avr\libraries\i2c_t3\i2c_t3.h and change I2C_TX_BUFFER_LENGTH to 1026.
-#endif
+// #if I2C_TX_BUFFER_LENGTH < 1026
+// #error I2C_TX_BUFFER_LENGTH must be at least 1026 for I2C_HID_Serial to work correctly. Go to \Program Files (x86)\Arduino\hardware\teensy\avr\libraries\i2c_t3\i2c_t3.h and change I2C_TX_BUFFER_LENGTH to 1026.
+// #endif
 
-#if I2C_RX_BUFFER_LENGTH < 1026
-#error I2C_RX_BUFFER_LENGTH must be at least 1026 for I2C_HID_Serial to work correctly. Go to \Program Files (x86)\Arduino\hardware\teensy\avr\libraries\i2c_t3\i2c_t3.h and change I2C_RX_BUFFER_LENGTH to 1026.
-#endif
-
+// #if I2C_RX_BUFFER_LENGTH < 1026
+// #error I2C_RX_BUFFER_LENGTH must be at least 1026 for I2C_HID_Serial to work correctly. Go to \Program Files (x86)\Arduino\hardware\teensy\avr\libraries\i2c_t3\i2c_t3.h and change I2C_RX_BUFFER_LENGTH to 1026.
+// #endif
 
 /************************************************************/
 /************************************************************/
@@ -28,7 +29,7 @@ void I2C_init(uint32_t clockFrequency)
  * release the line. false will keep the line busy to send a restart. */
 void I2C_request(int16_t address, int16_t count, bool stop)
 {
-  Wire.requestFrom(address, count, (i2c_stop)stop);
+  Wire.requestFrom(address, count, stop); // (i2c_stop)stop);
 }
 
 /** Returns the number of bytes available for reading. */

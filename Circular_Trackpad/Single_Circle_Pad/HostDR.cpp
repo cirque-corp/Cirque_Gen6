@@ -10,7 +10,7 @@
 	is driven high and low by the touch system. */
 void HostDR_init(void)
 {
-	pinMode(CONFIG_HOST_DR0_PIN, INPUT);
+	pinMode(CONFIG_HOST_DR0_PIN, INPUT_PULLUP);
 }
 
 /** Read the Host_DR line's state; either 0 or 1. */

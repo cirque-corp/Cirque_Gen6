@@ -3,8 +3,8 @@
 #ifndef __GEN6_BL_H__
 #define __GEN6_BL_H__
 
-void Test_Gen6_Program_0202();
-void Test_Gen6_Program_9902();
+void Test_Gen6_Program_FW0();
+void Test_Gen6_Program_FW1();
 void Test_Gen6_get_status();
 void Test_Gen6_get_hwid();
 

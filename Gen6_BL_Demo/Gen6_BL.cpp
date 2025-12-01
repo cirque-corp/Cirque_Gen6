@@ -1,6 +1,7 @@
 // Copyright (c) 2019 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
 
-#include <i2c_t3.h>
+//#include <i2c_t3.h>
+#include "i2c_driver_wire.h"
 #include <stdint.h>
 
 #include "API_C3_BL.h"
@@ -8,11 +9,21 @@
 // --------------------
 // The tests
 
-#include "FW0202.h"
-#include "FW9902.h"
+#include "FW_CustomMeas.h"  // Firmware #1
+#include "FW_SpiderMeas.h"  // Firmware #0
 
-uint32_t address_0202 = 0x0002d420;
-uint32_t address_9902 = 0x0002d420;
+// FW1 and FW0 are const arrays that are created using the open source SRecord project
+// srec_cat inputfile.hex -intel -o header.h -C-Array arrayname
+// You can direct this code to use some other hex file by changing these defines
+#define FW1_NAME "CustomMeas"
+#define FW1_BIN Oly1p3_CustomMeas_BL
+#define FW1_BIN_SIZE sizeof(Oly1p3_CustomMeas_BL)
+#define FW1_BASEADDRESS Oly1p3_CustomMeas_BL_start
+
+#define FW0_NAME "SpiderMeas"
+#define FW0_BIN Cirque_Oly1p2_SpiderMeas_BL
+#define FW0_BIN_SIZE sizeof(Cirque_Oly1p2_SpiderMeas_BL)
+#define FW0_BASEADDRESS Cirque_Oly1p2_SpiderMeas_BL_start
 
 static void PrintProgramErrors(uint16_t error)
 {
@@ -49,22 +60,26 @@ static void PrintProgramErrors(uint16_t error)
 }
 
 
-void Test_Gen6_Program_0202()
+void Test_Gen6_Program_FW1()
 {
     uint16_t error;
 
-    Serial.println("\nProgramming(02:22) will take about 15 seconds.\nPlease wait...");
-    error = BL_program(fw_bin_0202, sizeof(fw_bin_0202), address_0202);
+    Serial.print("\nProgramming ");
+    Serial.print(FW1_NAME);
+    Serial.println(", will take about 15 seconds.\nPlease wait...");
+    error = BL_program(FW1_BIN, FW1_BIN_SIZE, FW1_BASEADDRESS);
     PrintProgramErrors(error);
 }
 
 
-void Test_Gen6_Program_9902()
+void Test_Gen6_Program_FW0()
 {
     uint16_t error;
 
-    Serial.println("\nProgramming(99:02) will take about 15 seconds.\nPlease wait...");
-    error = BL_program(fw_bin_9902, sizeof(fw_bin_9902), address_9902);
+    Serial.print("\nProgramming ");
+    Serial.print(FW0_NAME);
+    Serial.println(", will take about 15 seconds.\nPlease wait...");
+    error = BL_program(FW0_BIN, FW0_BIN_SIZE, FW0_BASEADDRESS);
     PrintProgramErrors(error);
 }
 

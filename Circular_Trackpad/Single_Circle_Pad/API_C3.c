@@ -12,7 +12,7 @@
   #define PROJECT_MAX_PACKET_SIZE 53
 #endif
 
-#define BIG_ENDIAN 1
+#define GEN6_BIG_ENDIAN 1
 bool endianStateKnown = false;
 uint8_t endianState;
 
@@ -113,7 +113,7 @@ uint16_t API_C3_readRegister16(uint32_t address)
   uint8_t buf[2];
   HB_readExtendedMemory(address, buf, 2);
 
-  if (API_C3_endianState() == BIG_ENDIAN)
+  if (API_C3_endianState() == GEN6_BIG_ENDIAN)
   {
     // high byte at low address
     result = buf[0] << 8;
@@ -134,7 +134,7 @@ uint32_t API_C3_readRegister32(uint32_t address)
   uint8_t buf[4];
   HB_readExtendedMemory(address, buf, 4);
 
-  if (API_C3_endianState() == BIG_ENDIAN)
+  if (API_C3_endianState() == GEN6_BIG_ENDIAN)
   {
     // high byte at low address
     result = buf[0] << 24;
@@ -202,7 +202,7 @@ void API_C3_writeRegister(uint32_t address, uint8_t contents)
 void API_C3_writeRegister16(uint32_t address, uint16_t contents)
 {
   uint8_t buf[2];
-  if (API_C3_endianState() == BIG_ENDIAN)
+  if (API_C3_endianState() == GEN6_BIG_ENDIAN)
   {
     // high byte at low address
     buf[0] = (contents >> 8) & 0xFF;
@@ -219,7 +219,7 @@ void API_C3_writeRegister16(uint32_t address, uint16_t contents)
 void API_C3_writeRegister32(uint32_t address, uint32_t contents)
 {
   uint8_t buf[4];
-  if (API_C3_endianState() == BIG_ENDIAN)
+  if (API_C3_endianState() == GEN6_BIG_ENDIAN)
   {
     // high byte at low address
     buf[0] = (contents >> 24) & 0xFF;
@@ -648,7 +648,7 @@ void byteArrayToImage(uint8_t * byteArray, uint16_t byteLength, int16_t * imageA
   indexPixel = 0;
   for (indexByte = 0; indexByte < byteLength; indexByte += 2)
   {
-    if (API_C3_endianState() == BIG_ENDIAN)
+    if (API_C3_endianState() == GEN6_BIG_ENDIAN)
     {
       // high byte at low address
       imageArray[indexPixel++] = (byteArray[indexByte] << 8) | byteArray[indexByte + 1];

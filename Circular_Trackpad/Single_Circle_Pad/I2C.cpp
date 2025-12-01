@@ -2,23 +2,9 @@
 
 #include "I2C.h"
 #include "Project_Config.h"
-#include <Wire.h>
-#include <utility\twi.h>
-//#include <i2c_t3.h>
-
-#if BUFFER_LENGTH < 53
-#error BUFFER_LENGTH must be at least 53 for I2C_HID serial to work correctly. Go to \Program Files (x86)\Arduino\hardware\arduino\avr\libraries\Wire\src\Wire.h
-#error BUFFER_LENGTH must be at least 53 for I2C_HID serial to work correctly. Go to \Program Files (x86)\Arduino\hardware\teensy\avr\libraries\Wire\Wire.h
-#error BUFFER_LENGTH must be at least 53 for I2C_HID serial to work correctly. Go to \Program Files (x86)\Arduino\hardware\teensy\avr\libraries\Wire\WireIMXRT.h
-#error BUFFER_LENGTH must be at least 53 for I2C_HID serial to work correctly. Go to \Program Files (x86)\Arduino\hardware\teensy\avr\libraries\Wire\WireKinetis.h
-#endif
-
-// #define TWI_BUFFER_LENGTH 64
-
-#if TWI_BUFFER_LENGTH < 53
-#error TWI_BUFFER_LENGTH must be at least 53 for I2C_HID serial to work correctly. Go to \Program Files (x86)\Arduino\hardware\arduino\avr\libraries\Wire\src\utility\twi.h
-#error TWI_BUFFER_LENGTH must be at least 53 for I2C_HID serial to work correctly. Go to \Program Files (x86)\Arduino\hardware\teensy\avr\libraries\Wire\utility\twi.h
-#endif
+//#include <Wire.h>
+#include "i2c_driver_wire.h"
+//#define BUFFER_LENGTH Wire.rx_buffer_length
 
 /************************************************************/
 /************************************************************/
