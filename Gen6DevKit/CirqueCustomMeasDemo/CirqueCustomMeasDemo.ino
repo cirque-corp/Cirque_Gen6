@@ -8,11 +8,7 @@
 
 // use the cirque demo code library
 #include <CustomMeas.h>
-#include <HidDescriptor.h>
-#include <HidReport.h>
-#include <HidStructs.h>
-#include <HostBusLayer.h>
-#include <I2cHidApi.h>
+#include <Cirque.h>  // if the library is installed from Library Manager you might not need this
 #include <Teensy4_HostBusLayer.h>
 
 // demo measurements are in Measurements.h/cpp
