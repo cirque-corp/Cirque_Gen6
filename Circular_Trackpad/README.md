@@ -5,7 +5,7 @@ Copyright (c) 2025 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-licen
 ## Overview
 
 These project show how to use the circular trackpads. These demos are for the Glidepoint Development Kit, the Red Board, 02-000620-00 Rev A02 or later.
-The dev kit supports up to two trackpads being used at the same time. 
+The dev kit supports up to two trackpads being used at the same time. Each of these projects requires the Teensy4_i2c_CRQMods library to be in the Arduino/libraries directory.
 
 ## The Code
 

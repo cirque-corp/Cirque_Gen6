@@ -6,7 +6,7 @@
 This directory contains a sample program that demonstrates how to interface with Cirque's Gen6 Bootloader with a simple serial terminal.
 The program is intended for Gen6 parts (1p3). It will load either CustomMeas or SpiderMeas firmware into the parts.
 
-NOTE: use the Arduino serial monitor (found in the Tools menu) to issue character-based commands.
+NOTES: use the Arduino serial monitor (found in the Tools menu) to issue character-based commands. This project requires the Teensy4_i2c_CRQMods library (up in the libraries directory) to be in the Arduino/libraries directory.
 
 # Customizing
 To load your own firmware into the parts you'll need to convert the hex file into a binary array and provide start address and size information. See FW_*.h for examples of the data required.

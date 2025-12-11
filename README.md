@@ -7,6 +7,11 @@ Copyright (c) 2025 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-licen
 This repository contains sample code (c and C++) that demonstrates Cirque's capacitive touch solutions. 
 Many of these sample programs are Arduino projects for the Teensy 4.0.
 
+## Installation
+
+This entire repository can be placed directly into your Arduino projects directory. The the contents of the libraries directory go in the Arduino/libraries directory.
+As you open each .ino, remember to set the Board and Port to the correct values.
+
 ## The Code
 
 The code is arranged into these directories. 
