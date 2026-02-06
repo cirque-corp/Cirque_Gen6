@@ -23,9 +23,9 @@ public:
     void getCertificationStatus(uint8_t * blob, uint16_t blobLength);
     void setInputMode(bool setAbsolute);
     void setSelectiveReporting(bool enableContactReports, bool enableButtonReports);
+    uint8_t readCirqueRegister(uint32_t address);   // replaces API_C3_readRegister
 
 	// suggested functions, that need to be pulled over from the prior code
-	//uint8_t readCirqueRegister(uint32_t address);
 	//uint8_t endianState(void);
 	//uint16_t readCirqueRegister16(uint32_t address);
 	//uint32_t readCirqueRegister32(uint32_t address);
@@ -40,7 +40,6 @@ public:
 
     // Cirque C3 Api - these functions can be renamed and pulled over from the prior code
 
-    // uint8_t API_C3_readRegister(uint32_t address);
     // uint8_t API_C3_endianState(void);
     // uint16_t API_C3_readRegister16(uint32_t address);
     // uint32_t API_C3_readRegister32(uint32_t address);

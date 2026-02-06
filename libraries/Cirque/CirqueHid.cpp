@@ -40,6 +40,11 @@ void CirqueHid::setSelectiveReporting(bool enableContactReports, bool enableButt
     setFeatureReport(id_selectReporting, CIRQUE_DATA_REGISTER, data);
 }
 
-
+uint8_t CirqueHid::readCirqueRegister(uint32_t address)
+{
+    uint8_t result;
+    readExtendedMemory(address, &result, 1);
+    return result;
+}
 
 
