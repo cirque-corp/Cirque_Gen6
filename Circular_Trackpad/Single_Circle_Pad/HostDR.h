@@ -11,6 +11,9 @@
 extern "C" {
 #endif
 
+#define DR0_MASK (0x01)
+#define DR1_MASK (0x02)
+
 /** Required Host_DR API - The touch system requires the following Host_DR
 	functionality: */
 
@@ -19,7 +22,9 @@ extern "C" {
 /********************  PUBLIC FUNCTIONS *********************/
 void HostDR_init(void);
 
-bool HostDR_pinState(void);
+uint8_t HostDR_pinState(void);
+
+uint8_t HostDR_readDRViaI2C(void); // Only should be used if Host can't support interrupt on DR pin, otherwise use HostDR_pinState() for better performance
 
 #ifdef __cplusplus
 }

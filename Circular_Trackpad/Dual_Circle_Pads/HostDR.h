@@ -24,6 +24,8 @@ void HostDR_init(void);
 
 uint8_t HostDR_pinState(void);
 
+uint8_t HostDR_readDRViaI2C(void); // Only should be used if Host can't support interrupt on DR pin, otherwise use HostDR_pinState() for better performance
+
 #ifdef __cplusplus
 }
 #endif

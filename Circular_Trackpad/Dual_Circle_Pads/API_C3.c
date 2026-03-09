@@ -85,6 +85,11 @@ uint8_t API_C3_DR_Asserted(void)
     return (HB_DR_Asserted()); 
 }
 
+uint8_t API_C3_DR_Asserted_ViaI2C(void)
+{
+  return (HB_readDRViaI2C());
+}
+
 bool API_C3_getReport(uint8_t i2c_channel, HID_report_t* result)
 {
   // returns true if report received and decoded ok

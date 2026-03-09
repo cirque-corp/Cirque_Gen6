@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
+// Copyright (c) 2026 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
 
 #include "Arduino.h"
 #include "API_C3.h"
@@ -77,6 +77,11 @@ void API_C3_reinit(void)
 bool API_C3_DR_Asserted(void)
 {
     return (HB_DR_Asserted()); 
+}
+
+uint8_t API_C3_DR_Asserted_ViaI2C(void)
+{
+  return (HB_readDRViaI2C());
 }
 
 bool API_C3_getReport(HID_report_t* result)

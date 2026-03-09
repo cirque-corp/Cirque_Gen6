@@ -47,4 +47,7 @@ uint8_t CirqueHid::readCirqueRegister(uint32_t address)
     return result;
 }
 
-
+uint8_t CirqueHid::isDR_AssertedViaI2C()
+{
+    return readCirqueRegister(REG_DR_STATUS);
+}

@@ -52,6 +52,8 @@ void HB_init(int I2CFrequency, uint8_t I2CAddress);
 
 bool HB_DR_Asserted(void);
 
+uint8_t HB_readDRViaI2C(void);
+
 void HB_readReport(uint8_t * packet, uint16_t readLength);
 
 uint8_t HB_readExtendedMemory(uint32_t, uint8_t *, uint16_t);

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
+// Copyright (c) 2026 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
 
 
 #include "API_HostBus.h"
@@ -38,6 +38,15 @@ void HB_init(int I2CFrequency, uint8_t I2CAddress)
 bool HB_DR_Asserted(void)
 {
   return (HostDR_pinState() == 0);
+}
+
+/** The Host DR Line (Host_DR) is a an output from the touch system that signals when
+	there is data to be read. The line two states: Asserted (data is available), 
+	and de-asserted (no data is available). The details of the operation of 
+	that line are shown in HostDR_readDRViaI2C(). */
+uint8_t HB_readDRViaI2C(void)
+{
+  return HostDR_readDRViaI2C();
 }
 
 /** The most common I2C action is a "report read" operation to transfer touch 

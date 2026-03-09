@@ -80,7 +80,13 @@ void setup()
 void loop()
 {
   /* Handle incoming messages from modules */
-  if(API_C3_DR_Asserted() & DR0_MASK)          // When Data is ready
+  #if USE_DR_I2C
+  uint8_t dr_status = API_C3_DR_Asserted_ViaI2C();
+  #else
+  uint8_t dr_status = API_C3_DR_Asserted();
+  #endif
+
+  if(dr_status & DR0_MASK)          // When Data is ready
   {
     HID_report_t report;
     API_C3_getReport(0, &report);    // read the report
@@ -95,7 +101,7 @@ void loop()
     }
   }
   
-  if(API_C3_DR_Asserted() & DR1_MASK)          // When Data is ready
+  if(dr_status & DR1_MASK)          // When Data is ready
   {
     HID_report_t report;
     API_C3_getReport(1, &report);    // read the report

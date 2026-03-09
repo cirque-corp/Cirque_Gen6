@@ -6,6 +6,8 @@
 #include "HID_Reports.h"
 #include "I2C.h"
 
+#define USE_DR_I2C 1 // Reads out if data is ready through I2C instead of the interrupt pin
+
 void printMouseReport(HID_report_t * report);
 
 bool dataPrint_mode_g = true;  /** < toggle for printing out data > */
@@ -47,8 +49,13 @@ void setup()
     */
 void loop()
 {
-  /* Handle incoming messages from module */
-  if(API_C3_DR_Asserted())          // When Data is ready
+  #if USE_DR_I2C
+  uint8_t dr_status = API_C3_DR_Asserted_ViaI2C();
+  #else
+  uint8_t dr_status = API_C3_DR_Asserted();
+  #endif
+
+    if(dr_status)          // When Data is ready
   {
     HID_report_t report;
     API_C3_getReport(&report);    // read the report

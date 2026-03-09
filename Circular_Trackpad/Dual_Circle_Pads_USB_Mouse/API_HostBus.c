@@ -42,6 +42,15 @@ uint8_t HB_DR_Asserted(void)
   return HostDR_pinState();
 }
 
+/** The Host DR Line (Host_DR) is a an output from the touch system that signals when
+	there is data to be read. The line two states: Asserted (data is available), 
+	and de-asserted (no data is available). The details of the operation of 
+	that line are shown in HostDR_readDRViaI2C(). */
+uint8_t HB_readDRViaI2C(void)
+{
+  return HostDR_readDRViaI2C();
+}
+
 /** The most common I2C action is a "report read" operation to transfer touch 
 	information from the touch system to the host. The details of the read 
 	operation are shown in HB_readReport(). */

@@ -58,7 +58,13 @@ void setup()
 */
 void loop()
 {
-  if(API_C3_DR_Asserted())          // When Data is ready
+  #if USE_DR_I2C
+  uint8_t dr_status = API_C3_DR_Asserted_ViaI2C();
+  #else
+  uint8_t dr_status = API_C3_DR_Asserted();
+  #endif
+
+  if(dr_status)          // When Data is ready
   {
     API_C3_getReport(&report);    // read the report
     /* Interpret report from module */

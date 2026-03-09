@@ -24,6 +24,7 @@ public:
     void setInputMode(bool setAbsolute);
     void setSelectiveReporting(bool enableContactReports, bool enableButtonReports);
     uint8_t readCirqueRegister(uint32_t address);   // replaces API_C3_readRegister
+    uint8_t isDR_AssertedViaI2C(void);              // replaces API_C3_DR_Asserted_ViaI2C
 
 	// suggested functions, that need to be pulled over from the prior code
 	//uint8_t endianState(void);

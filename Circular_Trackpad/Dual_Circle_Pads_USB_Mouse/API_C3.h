@@ -71,6 +71,7 @@ typedef enum
 #define REG_FEED_CONFIG3              (0x200E000A)
 #define REG_FEED_CONFIG4              (0x200E000B)
 #define REG_PROJECT_SPECIFIC_HEADER   (0x20190000)
+#define REG_DR_STATUS                 (0x61010000)
 /**** EXTENDED REGISTERS *****/
 #define EXTREG_COMP_MATRIX_LENGTH     (0x30010000)
 #define EXTREG_COMP_MATRIX_DATA       (0x30010002)
@@ -167,6 +168,8 @@ void API_C3_init(int32_t I2CFrequency_0, uint8_t I2CAddress_0, int32_t I2CFreque
 void API_C3_reinit(void);
 
 uint8_t API_C3_DR_Asserted(void);
+
+uint8_t API_C3_DR_Asserted_ViaI2C(void);
 
 bool API_C3_getReport(uint8_t i2c_channel, HID_report_t* result);
 
