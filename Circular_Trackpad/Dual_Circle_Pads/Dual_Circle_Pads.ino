@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
+// Copyright (c) 2026 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
 
 #include "API_C3.h"         /** < Provides API calls to interact with API_C3 firmware */
 #include "API_Hardware.h"
@@ -6,7 +6,8 @@
 #include "HID_Reports.h"
 #include "I2C.h"
 
-// This code is built for the GlidePoint Development Kit (cirque.com), PCB 02-000620-00 Rev A02, Assembly A0-000194-00 Rev A02
+#define USE_DR_I2C 0 // Reads out if data is ready through I2C instead of the interrupt pin
+
 // The kit uses a Teensy 4.0 as the host, talking to two touchpads.
 // This demo is for the Gen6 touchpads, which are typically 23 mm and 35 mm circle sensors
 // but any Gen6 touchpad should work

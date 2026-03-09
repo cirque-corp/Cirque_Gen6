@@ -6,7 +6,7 @@
 #include "HID_Reports.h"
 #include "I2C.h"
 
-#define USE_DR_I2C 1 // Reads out if data is ready through I2C instead of the interrupt pin
+#define USE_DR_I2C 0 // Reads out if data is ready through I2C instead of the interrupt pin
 
 void printMouseReport(HID_report_t * report);
 

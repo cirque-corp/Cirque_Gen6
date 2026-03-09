@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
+// Copyright (c) 2026 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
 
 // Simple USB Mouse Example
 //   Teensy becomes a USB mouse and moves the cursor in response to trackpad touch events.
@@ -10,6 +10,8 @@
 #include "API_HostBus.h"    /** < Provides I2C connection to module */
 #include "HID_Reports.h"
 #include "I2C.h"
+
+#define USE_DR_I2C 0 // Reads out if data is ready through I2C instead of the interrupt pin
 
 bool dataPrint_mode_g = true;  /** < toggle for printing out data > */
 bool eventPrint_mode_g = true; /** < toggle for printing off events */
