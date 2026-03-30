@@ -9,9 +9,11 @@
 #define USE_DR_I2C 0 // Reads out if data is ready through I2C instead of the interrupt pin
 
 void printMouseReport(HID_report_t * report);
+void printRawHidPacket(const uint8_t* packet, uint16_t packetLength);
 
 bool dataPrint_mode_g = true;  /** < toggle for printing out data > */
 bool eventPrint_mode_g = true; /** < toggle for printing off events */
+bool rawDump_mode_g = false;   /** < toggle for printing raw HID packet bytes > */
 
 void setup()
 {
@@ -55,18 +57,37 @@ void loop()
   uint8_t dr_status = API_C3_DR_Asserted();
   #endif
 
-    if(dr_status)          // When Data is ready
+  if(dr_status)          // When Data is ready
   {
+    uint8_t packet[PROJECT_MAX_PACKET_SIZE];
     HID_report_t report;
-    API_C3_getReport(&report);    // read the report
+    HB_readReport(packet, PROJECT_MAX_PACKET_SIZE); // read the raw report bytes
+    bool decode_ok = HID_decodeReport(packet, &report);
+
+    if(rawDump_mode_g)
+    {
+      uint16_t packetLength = ((uint16_t)packet[1] << 8) | packet[0];
+      if(packetLength == 0 || packetLength > PROJECT_MAX_PACKET_SIZE)
+      {
+        packetLength = PROJECT_MAX_PACKET_SIZE;
+      }
+      printRawHidPacket(packet, packetLength);
+    }
+
+    if(!decode_ok)
+    {
+      Serial.println(F("Decode failed"));
+      return;
+    }
+
     /* Interpret report from module */
     if(eventPrint_mode_g)
     {
-        printEvent(&report);
-    }
+      printEvent(&report);
+  }
     if(dataPrint_mode_g)
     {
-        printDataReport(&report);
+      printDataReport(&report);
     }
   }
   
@@ -179,6 +200,16 @@ void processSerialCommand(char rxChar)
         eventPrint_mode_g = false;
         break;
 
+    case 'x':
+        Serial.println(F("Raw HID packet dump turned on"));
+        rawDump_mode_g = true;
+        break;
+
+    case 'X':
+        Serial.println(F("Raw HID packet dump turned off"));
+        rawDump_mode_g = false;
+        break;
+
     case 'i':
         Serial.println(F("Reading comp matrix"));
         printCompMatrix();
@@ -221,7 +252,33 @@ void printHelpTable()
   Serial.println(F("D\t-\tTurn off Data Printing "));
   Serial.println(F("e\t-\tTurn on Event Printing (default)"));
   Serial.println(F("E\t-\tTurn off Event Printing "));
+  //Serial.println(F("x\t-\tTurn on raw HID packet dump"));
+  //Serial.println(F("X\t-\tTurn off raw HID packet dump"));
   Serial.println(F(""));
+}
+
+void printRawHidPacket(const uint8_t* packet, uint16_t packetLength)
+{
+  char strBuf[40];
+  sprintf(strBuf, "RAW[%u]:", packetLength);
+  Serial.println(strBuf);
+
+  for(uint16_t i = 0; i < packetLength; i++)
+  {
+    if((i % 16) == 0)
+    {
+      sprintf(strBuf, "  %02u:", i);
+      Serial.print(strBuf);
+    }
+
+    sprintf(strBuf, " %02X", packet[i]);
+    Serial.print(strBuf);
+
+    if(((i % 16) == 15) || (i == (packetLength - 1)))
+    {
+      Serial.println();
+    }
+  }
 }
 
 /** Prints a systemInfo_t struct to Serial.
@@ -315,27 +372,62 @@ void printMouseReport(HID_report_t* report)
 void printPtpReport(HID_report_t * report)
 {
   char strBuf[50];
+  uint8_t i;
+  bool printedAnyContact = false;
+  bool multiContact = (report->ptp.contactCount > 1 || report->ptp.decodedContactSlots > 1);
+
   sprintf(strBuf,"ReportID: 0x%02X",report->reportID);
   Serial.print(strBuf);
   // Serial.print(report->reportID, HEX);
   sprintf(strBuf,", Time: %5d",report->ptp.timeStamp);
   Serial.print(strBuf);
-  sprintf(strBuf,", ContactID: %d",report->ptp.contactID);
-  Serial.print(strBuf);
-  sprintf(strBuf,", Confidence: %d",report->ptp.confidence); 
-  Serial.print(strBuf);
-  sprintf(strBuf,", Tip: %d",report->ptp.tip);
-  Serial.print(strBuf);
-  sprintf(strBuf,", X: %4d",report->ptp.x);
-  Serial.print(strBuf);
-  sprintf(strBuf,", Y: %4d",report->ptp.y);
-  Serial.print(strBuf);
+  if(!multiContact)
+  {
+    sprintf(strBuf,", ContactID: %d",report->ptp.contactID);
+    Serial.print(strBuf);
+    sprintf(strBuf,", Confidence: %d",report->ptp.confidence); 
+    Serial.print(strBuf);
+    sprintf(strBuf,", Tip: %d",report->ptp.tip);
+    Serial.print(strBuf);
+    sprintf(strBuf,", X: %4d",report->ptp.x);
+    Serial.print(strBuf);
+    sprintf(strBuf,", Y: %4d",report->ptp.y);
+    Serial.print(strBuf);
+  }
   sprintf(strBuf,", Buttons: %d",report->ptp.buttons);
   Serial.print(strBuf);
   sprintf(strBuf,", Contact Count: %d",report->ptp.contactCount); //Total number of contacts to be reported in a given report
   Serial.print(strBuf);
   Serial.println();
-   
+
+  if(multiContact)
+  {
+    for(i = 0; i < report->ptp.decodedContactSlots; i++)
+    {
+      if(report->ptp.contacts[i].tip)
+      {
+        printedAnyContact = true;
+        sprintf(strBuf, "  Contact[%d]", i);
+        Serial.print(strBuf);
+        sprintf(strBuf, ": ID=%d", report->ptp.contacts[i].contactID);
+        Serial.print(strBuf);
+        sprintf(strBuf, ", Tip=%d", report->ptp.contacts[i].tip);
+        Serial.print(strBuf);
+        sprintf(strBuf, ", Confidence=%d", report->ptp.contacts[i].confidence);
+        Serial.print(strBuf);
+        sprintf(strBuf, ", X=%4d", report->ptp.contacts[i].x);
+        Serial.print(strBuf);
+        sprintf(strBuf, ", Y=%4d", report->ptp.contacts[i].y);
+        Serial.print(strBuf);
+        Serial.println();
+      }
+    }
+
+    if(!printedAnyContact)
+    {
+      Serial.println(F("  No active contact slots in payload"));
+    }
+  }
 }
 
 /**************************************************************/

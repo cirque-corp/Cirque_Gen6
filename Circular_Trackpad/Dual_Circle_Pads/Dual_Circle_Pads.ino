@@ -23,6 +23,7 @@
 
 bool dataPrint_mode_g = true;  /** < toggle for printing out data > */
 bool eventPrint_mode_g = true; /** < toggle for printing off events */
+bool rawDump_mode_g = false;   /** < toggle for printing raw HID packet bytes > */
 
 void setup()
 {
@@ -89,31 +90,71 @@ void loop()
 
   if(dr_status & DR0_MASK)          // When Data is ready
   {
+    uint8_t packet[PROJECT_MAX_PACKET_SIZE];
     HID_report_t report;
-    API_C3_getReport(0, &report);    // read the report
-    /* Interpret report from module */
-    if(eventPrint_mode_g)
+    HB_readReport(0, packet, PROJECT_MAX_PACKET_SIZE); // read the raw report bytes
+    bool decode_ok = HID_decodeReport(packet, &report);
+
+    if(rawDump_mode_g)
     {
-        printEvent(0, &report);
+      uint16_t packetLength = ((uint16_t)packet[1] << 8) | packet[0];
+      if(packetLength == 0 || packetLength > PROJECT_MAX_PACKET_SIZE)
+      {
+        packetLength = PROJECT_MAX_PACKET_SIZE;
+      }
+      printRawHidPacket(0, packet, packetLength);
     }
-    if(dataPrint_mode_g)
+
+    if(!decode_ok)
     {
+      Serial.println(F("I2C_Chan 0 -> Decode failed"));
+    }
+    else
+    {
+      /* Interpret report from module */
+      if(eventPrint_mode_g)
+      {
+        printEvent(0, &report);
+      }
+      if(dataPrint_mode_g)
+      {
         printDataReport(0, &report);
+      }
     }
   }
   
   if(dr_status & DR1_MASK)          // When Data is ready
   {
+    uint8_t packet[PROJECT_MAX_PACKET_SIZE];
     HID_report_t report;
-    API_C3_getReport(1, &report);    // read the report
-    /* Interpret report from module */
-    if(eventPrint_mode_g)
+    HB_readReport(1, packet, PROJECT_MAX_PACKET_SIZE); // read the raw report bytes
+    bool decode_ok = HID_decodeReport(packet, &report);
+
+    if(rawDump_mode_g)
     {
-        printEvent(1, &report);
+      uint16_t packetLength = ((uint16_t)packet[1] << 8) | packet[0];
+      if(packetLength == 0 || packetLength > PROJECT_MAX_PACKET_SIZE)
+      {
+        packetLength = PROJECT_MAX_PACKET_SIZE;
+      }
+      printRawHidPacket(1, packet, packetLength);
     }
-    if(dataPrint_mode_g)
+
+    if(!decode_ok)
     {
+      Serial.println(F("I2C_Chan 1 -> Decode failed"));
+    }
+    else
+    {
+      /* Interpret report from module */
+      if(eventPrint_mode_g)
+      {
+        printEvent(1, &report);
+      }
+      if(dataPrint_mode_g)
+      {
         printDataReport(1, &report);
+      }
     }
   }
   
@@ -171,6 +212,16 @@ void processSerialCommand(char rxChar0, char rxChar1)
         case 'E':
             Serial.println(F("Event Printing turned off"));
             eventPrint_mode_g = false;
+            break;
+
+        case 'x':
+            Serial.println(F("Raw HID packet dump turned on"));
+            rawDump_mode_g = true;
+            break;
+
+        case 'X':
+            Serial.println(F("Raw HID packet dump turned off"));
+            rawDump_mode_g = false;
             break;
 
         default:
@@ -354,6 +405,16 @@ void processSerialCommand(char rxChar0, char rxChar1)
           Serial.println(F("Event Printing turned off"));
           eventPrint_mode_g = false;
           break;
+
+      case 'x':
+          Serial.println(F("Raw HID packet dump turned on"));
+          rawDump_mode_g = true;
+          break;
+
+      case 'X':
+          Serial.println(F("Raw HID packet dump turned off"));
+          rawDump_mode_g = false;
+          break;
         
       case '\n' :
         break;
@@ -395,7 +456,33 @@ void printHelpTable()
   Serial.println(F("D\t-\tTurn off Data Printing "));
   Serial.println(F("e\t-\tTurn on Event Printing (default)"));
   Serial.println(F("E\t-\tTurn off Event Printing "));
+  //Serial.println(F("x\t-\tTurn on raw HID packet dump"));
+  //Serial.println(F("X\t-\tTurn off raw HID packet dump"));
   Serial.println(F(""));
+}
+
+void printRawHidPacket(uint8_t i2c_channel, const uint8_t* packet, uint16_t packetLength)
+{
+  char strBuf[60];
+  sprintf(strBuf, "I2C_Chan %d -> RAW[%u]:", i2c_channel, packetLength);
+  Serial.println(strBuf);
+
+  for(uint16_t i = 0; i < packetLength; i++)
+  {
+    if((i % 16) == 0)
+    {
+      sprintf(strBuf, "  %02u:", i);
+      Serial.print(strBuf);
+    }
+
+    sprintf(strBuf, " %02X", packet[i]);
+    Serial.print(strBuf);
+
+    if(((i % 16) == 15) || (i == (packetLength - 1)))
+    {
+      Serial.println();
+    }
+  }
 }
 
 /** Prints a systemInfo_t struct to Serial.
@@ -465,15 +552,41 @@ void printDataReport(uint8_t i2c_channel, HID_report_t * report)
   }
 }
 
+/** Applies per-channel button mapping for host-side behavior.
+    Channel 1 is mapped so a primary button press is treated as right-click. */
+uint8_t mapButtonsForChannel(uint8_t i2c_channel, uint8_t buttons)
+{
+  if(i2c_channel == 1)
+  {
+    uint8_t mappedButtons = buttons;
+    bool leftPressed = (buttons & BUTTON_1_MASK) != 0;
+    bool rightPressed = (buttons & BUTTON_2_MASK) != 0;
+
+    mappedButtons &= ~(BUTTON_1_MASK | BUTTON_2_MASK);
+    if(leftPressed)
+    {
+      mappedButtons |= BUTTON_2_MASK;
+    }
+    if(rightPressed)
+    {
+      mappedButtons |= BUTTON_1_MASK;
+    }
+    return mappedButtons;
+  }
+
+  return buttons;
+}
+
 /** Prints the information stored in a mouse report to serial */
 void printMouseReport(uint8_t i2c_channel, HID_report_t* report)
 {
   char strBuf[50];
+  uint8_t buttons = mapButtonsForChannel(i2c_channel, report->mouse.buttons);
   sprintf(strBuf,"I2C_Chan %d -> ",i2c_channel);
   Serial.print(strBuf);
   sprintf(strBuf,"ReportID: 0x%02X",report->reportID);
   Serial.print(strBuf);
-  sprintf(strBuf,", Buttons: %c%c%c",((report->mouse.buttons & 1)?'L':'_'),((report->mouse.buttons & 4)?'C':'_'),((report->mouse.buttons & 2)?'R':'_'));
+  sprintf(strBuf,", Buttons: %c%c%c",((buttons & 1)?'L':'_'),((buttons & 4)?'C':'_'),((buttons & 2)?'R':'_'));
   // sprintf(strBuf,"Buttons: 0b%03b",report->mouse.buttons);
   Serial.print(strBuf);
   sprintf(strBuf,", X_Delta: %4d",report->mouse.xDelta);
@@ -493,6 +606,11 @@ void printMouseReport(uint8_t i2c_channel, HID_report_t* report)
 void printPtpReport(uint8_t i2c_channel, HID_report_t * report)
 {
   char strBuf[50];
+  uint8_t i;
+  uint8_t buttons = mapButtonsForChannel(i2c_channel, report->ptp.buttons);
+  bool printedAnyContact = false;
+  bool multiContact = (report->ptp.contactCount > 1 || report->ptp.decodedContactSlots > 1);
+
   sprintf(strBuf,"I2C_Chan %d -> ",i2c_channel);
   Serial.print(strBuf);
   sprintf(strBuf,"ReportID: 0x%02X",report->reportID);
@@ -500,21 +618,53 @@ void printPtpReport(uint8_t i2c_channel, HID_report_t * report)
   // Serial.print(report->reportID, HEX);
   sprintf(strBuf,", Time: %5d",report->ptp.timeStamp);
   Serial.print(strBuf);
-  sprintf(strBuf,", ContactID: %d",report->ptp.contactID);
-  Serial.print(strBuf);
-  sprintf(strBuf,", Confidence: %d",report->ptp.confidence); 
-  Serial.print(strBuf);
-  sprintf(strBuf,", Tip: %d",report->ptp.tip);
-  Serial.print(strBuf);
-  sprintf(strBuf,", X: %4d",report->ptp.x);
-  Serial.print(strBuf);
-  sprintf(strBuf,", Y: %4d",report->ptp.y);
-  Serial.print(strBuf);
-  sprintf(strBuf,", Buttons: %d",report->ptp.buttons);
+  if(!multiContact)
+  {
+    sprintf(strBuf,", ContactID: %d",report->ptp.contactID);
+    Serial.print(strBuf);
+    sprintf(strBuf,", Confidence: %d",report->ptp.confidence); 
+    Serial.print(strBuf);
+    sprintf(strBuf,", Tip: %d",report->ptp.tip);
+    Serial.print(strBuf);
+    sprintf(strBuf,", X: %4d",report->ptp.x);
+    Serial.print(strBuf);
+    sprintf(strBuf,", Y: %4d",report->ptp.y);
+    Serial.print(strBuf);
+  }
+  sprintf(strBuf,", Buttons: %d",buttons);
   Serial.print(strBuf);
   sprintf(strBuf,", Contact Count: %d",report->ptp.contactCount); //Total number of contacts to be reported in a given report
   Serial.print(strBuf);
   Serial.println();
+
+  if(multiContact)
+  {
+    for(i = 0; i < report->ptp.decodedContactSlots; i++)
+    {
+      if(report->ptp.contacts[i].tip)
+      {
+        printedAnyContact = true;
+        sprintf(strBuf, "  Contact[%d]", i);
+        Serial.print(strBuf);
+        sprintf(strBuf, ": ID=%d", report->ptp.contacts[i].contactID);
+        Serial.print(strBuf);
+        sprintf(strBuf, ", Tip=%d", report->ptp.contacts[i].tip);
+        Serial.print(strBuf);
+        sprintf(strBuf, ", Confidence=%d", report->ptp.contacts[i].confidence);
+        Serial.print(strBuf);
+        sprintf(strBuf, ", X=%4d", report->ptp.contacts[i].x);
+        Serial.print(strBuf);
+        sprintf(strBuf, ", Y=%4d", report->ptp.contacts[i].y);
+        Serial.print(strBuf);
+        Serial.println();
+      }
+    }
+
+    if(!printedAnyContact)
+    {
+      Serial.println(F("  No active contact slots in payload"));
+    }
+  }
    
 }
 
@@ -535,16 +685,16 @@ void printEvent(uint8_t i2c_channel, HID_report_t* cur_report)
   switch( cur_report->reportID)
   {
     case MOUSE_REPORT_ID:
-        printMouseReportEvents(i2c_channel, cur_report, &prevMouseReport_g); 
-        prevMouseReport_g = *cur_report;
-        break;
+      printMouseReportEvents(i2c_channel, cur_report, &prevMouseReport_g); 
+      prevMouseReport_g = *cur_report;
+      break;
     case PTP_REPORT_ID:
-        printPtpReportEvents(i2c_channel, cur_report, &prevPtpReport_g);
-        prevPtpReport_g = *cur_report;
-        break;
+      printPtpReportEvents(i2c_channel, cur_report, &prevPtpReport_g);
+      prevPtpReport_g = *cur_report;
+      break;
     default:
-        Serial.println(F("NOT VALID REPORT FOR EVENTS"));
-        break;
+      Serial.println(F("NOT VALID REPORT FOR EVENTS"));
+      break;
   }
 }
 
@@ -570,29 +720,36 @@ void printPtpReportEvents(uint8_t i2c_channel, HID_report_t * cur_report, HID_re
 /** Returns the button information in the passed in report. 
     returns 0 if NULL or report is a keyboard report that does not
     have button data. */
-uint8_t getButtonsFromReport(HID_report_t* report)
+uint8_t getButtonsFromReport(uint8_t i2c_channel, HID_report_t* report)
 {
-    if(report == NULL)
-    {
-        return 0;
-    }
-    switch(report->reportID)
-    {
-        case MOUSE_REPORT_ID:
-            return report->mouse.buttons;
-        case PTP_REPORT_ID:
-            return report->ptp.buttons;
-        default:
-            return 0;
-    }
+  uint8_t buttons = 0;
+
+  if(report == NULL)
+  {
+    return 0;
+  }
+  switch(report->reportID)
+  {
+    case MOUSE_REPORT_ID:
+      buttons = report->mouse.buttons;
+      break;
+    case PTP_REPORT_ID:
+      buttons = report->ptp.buttons;
+      break;
+    default:
+      buttons = 0;
+      break;
+  }
+
+  return mapButtonsForChannel(i2c_channel, buttons);
 }
 
 /** Determines and prints if a button event (press or release) occurred between cur_report and prev_report. 
     Demonstrates use of the API_C3_isButtonPressed function. */
 void printButtonEvents(uint8_t i2c_channel, HID_report_t* cur_report, HID_report_t* prev_report)
 {
-    uint8_t currentButtons = getButtonsFromReport(cur_report);
-    uint8_t prevButtons = getButtonsFromReport(prev_report);
+    uint8_t currentButtons = getButtonsFromReport(i2c_channel, cur_report);
+    uint8_t prevButtons = getButtonsFromReport(i2c_channel, prev_report);
     
     // XOR of the button fields shows what changed
     uint8_t changed_buttons = currentButtons ^ prevButtons;
@@ -622,11 +779,11 @@ void printButtonEvents(uint8_t i2c_channel, HID_report_t* cur_report, HID_report
     its type. */
 void initialize_saved_reports()
 {
-    prevMouseReport_g.reportID = MOUSE_REPORT_ID;
-    prevMouseReport_g.mouse.buttons = 0x0;
+  prevMouseReport_g.reportID = MOUSE_REPORT_ID;
+  prevMouseReport_g.mouse.buttons = 0x0;
 
-    prevPtpReport_g.reportID = PTP_REPORT_ID;
-    prevPtpReport_g.ptp.buttons = 0x0;
+  prevPtpReport_g.reportID = PTP_REPORT_ID;
+  prevPtpReport_g.ptp.buttons = 0x0;
 }
 
 void printCompMatrix(uint8_t i2c_channel)

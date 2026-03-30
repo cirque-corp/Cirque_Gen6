@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
+// Copyright (c) 2026 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
 
 #include "HID_Reports.h"
 
@@ -19,6 +19,8 @@
 /** Clears all values of report to zero. PTP is largest of union*/
 void clearReport(HID_report_t* report)
 {
+    uint8_t i;
+
     report->reportID = 0;
     report->reportLength = 0;
     //Clears the values of the largest member of the Union.
@@ -28,6 +30,15 @@ void clearReport(HID_report_t* report)
     report->ptp.contactID = 0;
     report->ptp.confidence = 0;
     report->ptp.tip = 0;
+    report->ptp.decodedContactSlots = 0;
+    for(i = 0; i < PTP_MAX_CONTACTS; i++)
+    {
+      report->ptp.contacts[i].x = 0;
+      report->ptp.contacts[i].y = 0;
+      report->ptp.contacts[i].contactID = 0;
+      report->ptp.contacts[i].confidence = 0;
+      report->ptp.contacts[i].tip = 0;
+    }
     report->ptp.contactCount = 0;
     report->ptp.buttons = 0;
 }
@@ -95,6 +106,12 @@ bool HID_decodeMouseReport(uint8_t* packet, HID_report_t* result)
 
 bool HID_decodePTPReport(uint8_t* packet, HID_report_t* result)
 {
+    uint16_t dataStart = PTP_HEADER_BYTES;
+    uint16_t dataEnd = 0;
+    uint16_t contactBytes = 0;
+    uint8_t slotCount = 0;
+    uint8_t i = 0;
+
     if(packet[REPORT_ID] != PTP_REPORT_ID)
     {
         //it's not a absolute report
@@ -111,29 +128,66 @@ bool HID_decodePTPReport(uint8_t* packet, HID_report_t* result)
     result->reportLength = (uint16_t)(packet[1] << 8) + packet[0];
     result->reportID = packet[2];
 	
-    result->ptp.confidence = packet[3] & 0x01;   // bit 0
-    result->ptp.tip = (packet[3] & 0x02) >> 1;   // bit 1
-    result->ptp.contactID = (packet[3] & 0xFC) >> 2; // bits 2..7
-
-	result->ptp.x = (uint16_t) packet[4];   // low byte
-	result->ptp.x |= (uint16_t) packet[5] << 8;  // high byte
-
-	result->ptp.y = (uint16_t) packet[6];   // low byte
-	result->ptp.y |= (uint16_t) packet[7] << 8;  // high byte
-    
-    if(result->reportLength == 12)
+    if(result->reportLength >= (PTP_HEADER_BYTES + PTP_TRAILER_BYTES + PTP_CONTACT_BYTES))
     {
-        result->ptp.timeStamp = (uint16_t) packet[8];  // low byte
-        result->ptp.timeStamp |= (uint16_t ) packet[9] << 8;  // high byte
-        result->ptp.contactCount = packet[10];
-        result->ptp.buttons = packet[11]; 
+      // Timestamp/contact count/buttons are always the final 4 bytes of the PTP report.
+      uint16_t tail = result->reportLength - 4;
+      result->ptp.timeStamp = (uint16_t) packet[tail];  // low byte
+      result->ptp.timeStamp |= (uint16_t) packet[tail + 1] << 8;  // high byte
+      result->ptp.contactCount = packet[tail + 2];
+      result->ptp.buttons = packet[tail + 3];
+
+      dataEnd = tail;
+      contactBytes = dataEnd - dataStart;
+      slotCount = contactBytes / PTP_CONTACT_BYTES;
+      if(slotCount > PTP_MAX_CONTACTS)
+      {
+        slotCount = PTP_MAX_CONTACTS;
+      }
+      result->ptp.decodedContactSlots = slotCount;
+
+      for(i = 0; i < slotCount; i++)
+      {
+        uint16_t contactOffset = dataStart + ((uint16_t)i * PTP_CONTACT_BYTES);
+        uint8_t state = packet[contactOffset];
+        result->ptp.contacts[i].confidence = state & 0x01;          // bit 0
+        result->ptp.contacts[i].tip = (state & 0x02) >> 1;          // bit 1
+        result->ptp.contacts[i].contactID = (state & 0xFC) >> 2;    // bits 2..7
+        result->ptp.contacts[i].x = (uint16_t) packet[contactOffset + 1];
+        result->ptp.contacts[i].x |= (uint16_t) packet[contactOffset + 2] << 8;
+        result->ptp.contacts[i].y = (uint16_t) packet[contactOffset + 3];
+        result->ptp.contacts[i].y |= (uint16_t) packet[contactOffset + 4] << 8;
+      }
+
+      // Preserve legacy single-contact fields as contact slot 0 for compatibility.
+      if(slotCount > 0)
+      {
+        result->ptp.confidence = result->ptp.contacts[0].confidence;
+        result->ptp.tip = result->ptp.contacts[0].tip;
+        result->ptp.contactID = result->ptp.contacts[0].contactID;
+        result->ptp.x = result->ptp.contacts[0].x;
+        result->ptp.y = result->ptp.contacts[0].y;
+      }
+      else
+      {
+        result->ptp.confidence = 0;
+        result->ptp.tip = 0;
+        result->ptp.contactID = 0;
+        result->ptp.x = 0;
+        result->ptp.y = 0;
+      }
     }
-    else //if(result->reportLength == 13)
+    else
     {
-        result->ptp.timeStamp = (uint16_t) packet[9];  // low byte
-        result->ptp.timeStamp |= (uint16_t ) packet[10] << 8;  // high byte
-        result->ptp.contactCount = packet[11];
-        result->ptp.buttons = packet[12];  
+      result->ptp.timeStamp = 0;
+      result->ptp.confidence = 0;
+      result->ptp.tip = 0;
+      result->ptp.contactID = 0;
+      result->ptp.x = 0;
+      result->ptp.y = 0;
+      result->ptp.decodedContactSlots = 0;
+      result->ptp.contactCount = 0;
+      result->ptp.buttons = 0;
     }
 
 	return true;
