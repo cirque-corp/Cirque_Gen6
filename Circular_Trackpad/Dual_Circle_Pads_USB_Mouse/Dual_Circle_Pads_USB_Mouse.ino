@@ -15,6 +15,7 @@
 
 bool dataPrint_mode_g = true;  /** < toggle for printing out data > */
 bool eventPrint_mode_g = true; /** < toggle for printing off events */
+bool rawDump_mode_g = false;   /** < toggle for printing raw HID packet bytes > */
 
 bool button1Pressed, prevButton1Pressed;
 bool button2Pressed, prevButton2Pressed;
@@ -93,56 +94,41 @@ void loop()
 
   if(dr_status & DR0_MASK)          // When Data is ready
   {
-    API_C3_getReport(0, &report);    // read the report
-    /* Interpret report from module */
-    if(eventPrint_mode_g)
+    uint8_t packet[PROJECT_MAX_PACKET_SIZE];
+    HB_readReport(0, packet, PROJECT_MAX_PACKET_SIZE); // read the raw report bytes
+    bool decode_ok = HID_decodeReport(packet, &report);
+
+    if(rawDump_mode_g)
     {
-        printEvent(0, &report);
+      uint16_t packetLength = ((uint16_t)packet[1] << 8) | packet[0];
+      if(packetLength == 0 || packetLength > PROJECT_MAX_PACKET_SIZE)
+      {
+        packetLength = PROJECT_MAX_PACKET_SIZE;
+      }
+      printRawHidPacket(0, packet, packetLength);
     }
-    if(dataPrint_mode_g)
+
+    if(!decode_ok)
     {
-        printDataReport(0, &report);
+      Serial.println(F("I2C_Chan 0 -> Decode failed"));
     }
-    
-    if (MOUSE_REPORT_ID == report.reportID)
+    else
     {
-      Mouse.move(report.mouse.xDelta, report.mouse.yDelta);
-
-      if(report.mouse.buttons & 0x01)
+      /* Interpret report from module */
+      if(eventPrint_mode_g)
       {
-        button1Pressed = true;
+          printEvent(0, &report);
       }
-      else
+      if(dataPrint_mode_g)
       {
-        button1Pressed = false;
+          printDataReport(0, &report);
       }
-    }
-    else if (PTP_REPORT_ID == report.reportID)
-    {
-      if (!prevPtpSetFlag1 && report.ptp.tip)    // skip a frame of movement to set starting PTP location
+      
+      if (MOUSE_REPORT_ID == report.reportID)
       {
-        prevPtpX1 = report.ptp.x;
-        prevPtpY1 = report.ptp.y;
-        prevPtpSetFlag1 = true;
-        // Serial.printf("SET:  prev = %5d, %5d\n", prevPtpX1, prevPtpY1);
-      }
-      else if (!report.ptp.tip)
-      {
-        prevPtpSetFlag1 = false;
-      }
-      else
-      {
-        deltaPtpX = report.ptp.x - prevPtpX1;
-        deltaPtpY = report.ptp.y - prevPtpY1;
-        
-        // Serial.printf("MOVE: prev = %5d, %5d; new = %5d, %5d; delta = %5d, %5d\n", prevPtpX1, prevPtpY1, report.ptp.x, report.ptp.y, deltaPtpX, deltaPtpY);
+        Mouse.move(report.mouse.xDelta, report.mouse.yDelta);
 
-        Mouse.move(deltaPtpX, deltaPtpY);
-
-        prevPtpX1 = report.ptp.x;
-        prevPtpY1 = report.ptp.y;
-
-        if(report.ptp.buttons & 0x01)
+        if(report.mouse.buttons & 0x01)
         {
           button1Pressed = true;
         }
@@ -151,92 +137,147 @@ void loop()
           button1Pressed = false;
         }
       }
-    }
+      else if (PTP_REPORT_ID == report.reportID)
+      {
+        if (!prevPtpSetFlag1 && report.ptp.tip)    // skip a frame of movement to set starting PTP location
+        {
+          prevPtpX1 = report.ptp.x;
+          prevPtpY1 = report.ptp.y;
+          prevPtpSetFlag1 = true;
+          // Serial.printf("SET:  prev = %5d, %5d\n", prevPtpX1, prevPtpY1);
+        }
+        else if (!report.ptp.tip)
+        {
+          prevPtpSetFlag1 = false;
+        }
+        else
+        {
+          deltaPtpX = report.ptp.x - prevPtpX1;
+          deltaPtpY = report.ptp.y - prevPtpY1;
+          
+          // Serial.printf("MOVE: prev = %5d, %5d; new = %5d, %5d; delta = %5d, %5d\n", prevPtpX1, prevPtpY1, report.ptp.x, report.ptp.y, deltaPtpX, deltaPtpY);
 
-    if (!prevButton1Pressed && !prevButton2Pressed && button1Pressed)
-    {
-      Mouse.press();
-    }
-    else if (prevButton1Pressed && !button1Pressed && !button2Pressed)
-    {
-      Mouse.release();
-    }
+          Mouse.move(deltaPtpX, deltaPtpY);
 
-    prevButton1Pressed = button1Pressed;
+          prevPtpX1 = report.ptp.x;
+          prevPtpY1 = report.ptp.y;
+
+          if(report.ptp.buttons & 0x01)
+          {
+            button1Pressed = true;
+          }
+          else
+          {
+            button1Pressed = false;
+          }
+        }
+      }
+
+      if (!prevButton1Pressed && !prevButton2Pressed && button1Pressed)
+      {
+        Mouse.press();
+      }
+      else if (prevButton1Pressed && !button1Pressed && !button2Pressed)
+      {
+        Mouse.release();
+      }
+
+      prevButton1Pressed = button1Pressed;
+    }
   }
   
   if(dr_status & DR1_MASK)          // When Data is ready
   {
-    API_C3_getReport(1, &report);    // read the report
-    /* Interpret report from module */
-    if(eventPrint_mode_g)
+    uint8_t packet[PROJECT_MAX_PACKET_SIZE];
+    HB_readReport(1, packet, PROJECT_MAX_PACKET_SIZE); // read the raw report bytes
+    bool decode_ok = HID_decodeReport(packet, &report);
+
+    if(rawDump_mode_g)
     {
-        printEvent(1, &report);
+      uint16_t packetLength = ((uint16_t)packet[1] << 8) | packet[0];
+      if(packetLength == 0 || packetLength > PROJECT_MAX_PACKET_SIZE)
+      {
+        packetLength = PROJECT_MAX_PACKET_SIZE;
+      }
+      printRawHidPacket(1, packet, packetLength);
     }
-    if(dataPrint_mode_g)
+
+    if(!decode_ok)
     {
-        printDataReport(1, &report);
+      Serial.println(F("I2C_Chan 1 -> Decode failed"));
     }
-    
-    if (MOUSE_REPORT_ID == report.reportID)
+    else
     {
-      Mouse.move(report.mouse.xDelta, report.mouse.yDelta);
-
-      if(report.mouse.buttons & 0x01)
+      /* Interpret report from module */
+      if(eventPrint_mode_g)
       {
-        button1Pressed = true;
+          printEvent(1, &report);
       }
-      else
+      if(dataPrint_mode_g)
       {
-        button1Pressed = false;
+          printDataReport(1, &report);
       }
-    }
-    else if (PTP_REPORT_ID == report.reportID)
-    {
-      if (!prevPtpSetFlag2 && report.ptp.tip)    // skip a frame of movement to set starting PTP location
+      
+      if (MOUSE_REPORT_ID == report.reportID)
       {
-        prevPtpX2 = report.ptp.x;
-        prevPtpY2 = report.ptp.y;
-        prevPtpSetFlag2 = true;
-        // Serial.printf("SET:  prev = %5d, %5d\n", prevPtpX1, prevPtpY1);
-      }
-      else if (!report.ptp.tip)
-      {
-        prevPtpSetFlag2 = false;
-      }
-      else
-      {
-        deltaPtpX = report.ptp.x - prevPtpX2;
-        deltaPtpY = report.ptp.y - prevPtpY2;
-        
-        // Serial.printf("MOVE: prev = %5d, %5d; new = %5d, %5d; delta = %5d, %5d\n", prevPtpX2, prevPtpY2, report.ptp.x, report.ptp.y, deltaPtpX, deltaPtpY);
+        Mouse.move(report.mouse.xDelta, report.mouse.yDelta);
 
-        Mouse.move(deltaPtpX, deltaPtpY);
-
-        prevPtpX2 = report.ptp.x;
-        prevPtpY2 = report.ptp.y;
-
-        if(report.ptp.buttons & 0x01)
+        if(report.mouse.buttons & 0x01)
         {
-          button2Pressed = true;
+          button1Pressed = true;
         }
         else
         {
-          button2Pressed = false;
+          button1Pressed = false;
         }
       }
-    }
+      else if (PTP_REPORT_ID == report.reportID)
+      {
+        if (!prevPtpSetFlag2 && report.ptp.tip)    // skip a frame of movement to set starting PTP location
+        {
+          prevPtpX2 = report.ptp.x;
+          prevPtpY2 = report.ptp.y;
+          prevPtpSetFlag2 = true;
+          // Serial.printf("SET:  prev = %5d, %5d\n", prevPtpX1, prevPtpY1);
+        }
+        else if (!report.ptp.tip)
+        {
+          prevPtpSetFlag2 = false;
+        }
+        else
+        {
+          deltaPtpX = report.ptp.x - prevPtpX2;
+          deltaPtpY = report.ptp.y - prevPtpY2;
+          
+          // Serial.printf("MOVE: prev = %5d, %5d; new = %5d, %5d; delta = %5d, %5d\n", prevPtpX2, prevPtpY2, report.ptp.x, report.ptp.y, deltaPtpX, deltaPtpY);
 
-    if (!prevButton2Pressed && !prevButton1Pressed && button2Pressed)
-    {
-      Mouse.press();
-    }
-    else if (prevButton2Pressed && !button2Pressed && !button1Pressed)
-    {
-      Mouse.release();
-    }
+          Mouse.move(deltaPtpX, deltaPtpY);
 
-    prevButton2Pressed = button2Pressed;
+          prevPtpX2 = report.ptp.x;
+          prevPtpY2 = report.ptp.y;
+
+          if(report.ptp.buttons & 0x01)
+          {
+            button2Pressed = true;
+          }
+          else
+          {
+            button2Pressed = false;
+          }
+        }
+      }
+
+      if (!prevButton2Pressed && !prevButton1Pressed && button2Pressed)
+      {
+        Mouse.press();
+      }
+      else if (prevButton2Pressed && !button2Pressed && !button1Pressed)
+      {
+        Mouse.release();
+      }
+
+      prevButton2Pressed = button2Pressed;
+    }
   }
   
   /* Handle incoming messages from user on serial */
@@ -294,6 +335,16 @@ void processSerialCommand(char rxChar0, char rxChar1)
             Serial.println(F("Event Printing turned off"));
             eventPrint_mode_g = false;
             break;
+
+        case 'x':
+          Serial.println(F("Raw HID packet dump turned on"));
+          rawDump_mode_g = true;
+          break;
+
+        case 'X':
+          Serial.println(F("Raw HID packet dump turned off"));
+          rawDump_mode_g = false;
+          break;
 
         default:
             printHelpTable();
@@ -476,6 +527,16 @@ void processSerialCommand(char rxChar0, char rxChar1)
           Serial.println(F("Event Printing turned off"));
           eventPrint_mode_g = false;
           break;
+
+        case 'x':
+          Serial.println(F("Raw HID packet dump turned on"));
+          rawDump_mode_g = true;
+          break;
+
+        case 'X':
+          Serial.println(F("Raw HID packet dump turned off"));
+          rawDump_mode_g = false;
+          break;
         
       case '\n' :
         break;
@@ -517,7 +578,33 @@ void printHelpTable()
   Serial.println(F("D\t-\tTurn off Data Printing "));
   Serial.println(F("e\t-\tTurn on Event Printing (default)"));
   Serial.println(F("E\t-\tTurn off Event Printing "));
+  Serial.println(F("x\t-\tTurn on raw HID packet dump"));
+  Serial.println(F("X\t-\tTurn off raw HID packet dump"));
   Serial.println(F(""));
+}
+
+void printRawHidPacket(uint8_t i2c_channel, const uint8_t* packet, uint16_t packetLength)
+{
+  char strBuf[60];
+  sprintf(strBuf, "I2C_Chan %d -> RAW[%u]:", i2c_channel, packetLength);
+  Serial.println(strBuf);
+
+  for(uint16_t i = 0; i < packetLength; i++)
+  {
+    if((i % 16) == 0)
+    {
+      sprintf(strBuf, "  %02u:", i);
+      Serial.print(strBuf);
+    }
+
+    sprintf(strBuf, " %02X", packet[i]);
+    Serial.print(strBuf);
+
+    if(((i % 16) == 15) || (i == (packetLength - 1)))
+    {
+      Serial.println();
+    }
+  }
 }
 
 /** Prints a systemInfo_t struct to Serial.
@@ -615,6 +702,10 @@ void printMouseReport(uint8_t i2c_channel, HID_report_t* report)
 void printPtpReport(uint8_t i2c_channel, HID_report_t * report)
 {
   char strBuf[50];
+  uint8_t i;
+  bool printedAnyContact = false;
+  bool multiContact = (report->ptp.contactCount > 1 || report->ptp.decodedContactSlots > 1);
+
   sprintf(strBuf,"I2C_Chan %d -> ",i2c_channel);
   Serial.print(strBuf);
   sprintf(strBuf,"ReportID: 0x%02X",report->reportID);
@@ -622,21 +713,53 @@ void printPtpReport(uint8_t i2c_channel, HID_report_t * report)
   // Serial.print(report->reportID, HEX);
   sprintf(strBuf,", Time: %5d",report->ptp.timeStamp);
   Serial.print(strBuf);
-  sprintf(strBuf,", ContactID: %d",report->ptp.contactID);
-  Serial.print(strBuf);
-  sprintf(strBuf,", Confidence: %d",report->ptp.confidence); 
-  Serial.print(strBuf);
-  sprintf(strBuf,", Tip: %d",report->ptp.tip);
-  Serial.print(strBuf);
-  sprintf(strBuf,", X: %4d",report->ptp.x);
-  Serial.print(strBuf);
-  sprintf(strBuf,", Y: %4d",report->ptp.y);
-  Serial.print(strBuf);
+  if(!multiContact)
+  {
+    sprintf(strBuf,", ContactID: %d",report->ptp.contactID);
+    Serial.print(strBuf);
+    sprintf(strBuf,", Confidence: %d",report->ptp.confidence); 
+    Serial.print(strBuf);
+    sprintf(strBuf,", Tip: %d",report->ptp.tip);
+    Serial.print(strBuf);
+    sprintf(strBuf,", X: %4d",report->ptp.x);
+    Serial.print(strBuf);
+    sprintf(strBuf,", Y: %4d",report->ptp.y);
+    Serial.print(strBuf);
+  }
   sprintf(strBuf,", Buttons: %d",report->ptp.buttons);
   Serial.print(strBuf);
   sprintf(strBuf,", Contact Count: %d",report->ptp.contactCount); //Total number of contacts to be reported in a given report
   Serial.print(strBuf);
   Serial.println();
+
+  if(multiContact)
+  {
+    for(i = 0; i < report->ptp.decodedContactSlots; i++)
+    {
+      if(report->ptp.contacts[i].tip)
+      {
+        printedAnyContact = true;
+        sprintf(strBuf, "  Contact[%d]", i);
+        Serial.print(strBuf);
+        sprintf(strBuf, ": ID=%d", report->ptp.contacts[i].contactID);
+        Serial.print(strBuf);
+        sprintf(strBuf, ", Tip=%d", report->ptp.contacts[i].tip);
+        Serial.print(strBuf);
+        sprintf(strBuf, ", Confidence=%d", report->ptp.contacts[i].confidence);
+        Serial.print(strBuf);
+        sprintf(strBuf, ", X=%4d", report->ptp.contacts[i].x);
+        Serial.print(strBuf);
+        sprintf(strBuf, ", Y=%4d", report->ptp.contacts[i].y);
+        Serial.print(strBuf);
+        Serial.println();
+      }
+    }
+
+    if(!printedAnyContact)
+    {
+      Serial.println(F("  No active contact slots in payload"));
+    }
+  }
    
 }
 
