@@ -92,11 +92,11 @@ void processKeys(void)
         customMeas.StopMeas();
         for (int x = 0; x < GROUPINFO_LENGTH; x++)
         {
-          customMeas.WriteGroupInfo(0, &GroupInfoArray[x]);
+          customMeas.WriteGroupInfo(x, &GroupInfoArray[x]);
         }
         for (int x = 0; x < MEASINFO_LENGTH; x++)
         {
-          customMeas.WriteMeasInfo(0, &MeasInfoArray[x]);
+          customMeas.WriteMeasInfo(x, &MeasInfoArray[x]);
         }
 
         Serial.println(F("  Groups and Measurements written"));
