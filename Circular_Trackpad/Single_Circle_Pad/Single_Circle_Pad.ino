@@ -5,15 +5,19 @@
 #include "API_HostBus.h"    /** < Provides I2C connection to module */
 #include "HID_Reports.h"
 #include "I2C.h"
+#include <string.h>
 
 #define USE_DR_I2C 0 // Reads out if data is ready through I2C instead of the interrupt pin
 
 void printMouseReport(HID_report_t * report);
 void printRawHidPacket(const uint8_t* packet, uint16_t packetLength);
+void printDecodeFailureDebug(const uint8_t* packet, uint8_t dr_status);
 
 bool dataPrint_mode_g = true;  /** < toggle for printing out data > */
 bool eventPrint_mode_g = true; /** < toggle for printing off events */
 bool rawDump_mode_g = false;   /** < toggle for printing raw HID packet bytes > */
+bool decodeDebug_mode_g = true; /** < toggle for detailed decode failure diagnostics > */
+uint32_t decodeFailCount_g = 0;
 
 void setup()
 {
@@ -25,14 +29,14 @@ void setup()
   delay(2);                  //delay for power up
   
   // initialize i2c connection at 400kHz 
-  API_C3_init(PROJECT_I2C_FREQUENCY, ALPS_I2C_ADDR); 
+  API_C3_init(PROJECT_I2C_FREQUENCY, CIRQUE_I2C_ADDR); 
 
   Serial.println(F("Single Pad Demo"));
   Serial.println(F("I2C initiated"));
 
-  uint8_t i2c_error = i2cPing(ALPS_I2C_ADDR);
+  uint8_t i2c_error = i2cPing(CIRQUE_I2C_ADDR);
 
-  Serial.print(F("ALPS_I2C_ADDR ping response: "));
+  Serial.print(F("CIRQUE_I2C_ADDR ping response: "));
   Serial.println(i2c_error,HEX);
   
   delay(50);                 //delay before reading registers after startup
@@ -61,6 +65,7 @@ void loop()
   {
     uint8_t packet[PROJECT_MAX_PACKET_SIZE];
     HID_report_t report;
+    memset(packet, 0, sizeof(packet));
     HB_readReport(packet, PROJECT_MAX_PACKET_SIZE); // read the raw report bytes
     bool decode_ok = HID_decodeReport(packet, &report);
 
@@ -76,7 +81,12 @@ void loop()
 
     if(!decode_ok)
     {
+      decodeFailCount_g++;
       Serial.println(F("Decode failed"));
+      if(decodeDebug_mode_g)
+      {
+        printDecodeFailureDebug(packet, dr_status);
+      }
       return;
     }
 
@@ -210,6 +220,16 @@ void processSerialCommand(char rxChar)
         rawDump_mode_g = false;
         break;
 
+    case 'z':
+      Serial.println(F("Decode debug diagnostics turned on"));
+      decodeDebug_mode_g = true;
+      break;
+
+    case 'Z':
+      Serial.println(F("Decode debug diagnostics turned off"));
+      decodeDebug_mode_g = false;
+      break;
+
     case 'i':
         Serial.println(F("Reading comp matrix"));
         printCompMatrix();
@@ -252,6 +272,8 @@ void printHelpTable()
   Serial.println(F("D\t-\tTurn off Data Printing "));
   Serial.println(F("e\t-\tTurn on Event Printing (default)"));
   Serial.println(F("E\t-\tTurn off Event Printing "));
+  Serial.println(F("z\t-\tTurn on decode failure diagnostics (default)"));
+  Serial.println(F("Z\t-\tTurn off decode failure diagnostics"));
   //Serial.println(F("x\t-\tTurn on raw HID packet dump"));
   //Serial.println(F("X\t-\tTurn off raw HID packet dump"));
   Serial.println(F(""));
@@ -279,6 +301,49 @@ void printRawHidPacket(const uint8_t* packet, uint16_t packetLength)
       Serial.println();
     }
   }
+}
+
+void printDecodeFailureDebug(const uint8_t* packet, uint8_t dr_status)
+{
+  uint16_t packetLength = ((uint16_t)packet[1] << 8) | packet[0];
+  uint8_t reportId = packet[2];
+
+  Serial.print(F("Decode failure #"));
+  Serial.println(decodeFailCount_g);
+  Serial.print(F("DR status at read: "));
+  Serial.println(dr_status);
+  Serial.print(F("Packet length from header: "));
+  Serial.print(packetLength);
+  Serial.print(F(" (max expected "));
+  Serial.print(PROJECT_MAX_PACKET_SIZE);
+  Serial.println(F(")"));
+  Serial.print(F("Report ID from header: 0x"));
+  if(reportId < 0x10)
+  {
+    Serial.print('0');
+  }
+  Serial.println(reportId, HEX);
+
+  if(packetLength == 0 || packetLength > PROJECT_MAX_PACKET_SIZE)
+  {
+    Serial.println(F("Possible cause: invalid report length in packet header"));
+  }
+  if((reportId != PTP_REPORT_ID) && (reportId != MOUSE_REPORT_ID))
+  {
+    Serial.println(F("Possible cause: unexpected report ID (not PTP/MOUSE)"));
+  }
+
+  Serial.println(F("First 12 packet bytes:"));
+  for(uint8_t i = 0; i < 12 && i < PROJECT_MAX_PACKET_SIZE; i++)
+  {
+    if(packet[i] < 0x10)
+    {
+      Serial.print('0');
+    }
+    Serial.print(packet[i], HEX);
+    Serial.print(' ');
+  }
+  Serial.println();
 }
 
 /** Prints a systemInfo_t struct to Serial.
@@ -590,8 +655,7 @@ uint8_t i2cPing(uint8_t i2cAddr)
     Serial.print("I2C device found at address 0x");
     if (i2cAddr<16) 
       Serial.print("0");
-    Serial.print(i2cAddr,HEX);
-    Serial.println("  !");
+    Serial.println(i2cAddr,HEX);
   }
   else 
   {

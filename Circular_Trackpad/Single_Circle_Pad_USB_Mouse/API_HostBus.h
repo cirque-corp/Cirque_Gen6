@@ -14,8 +14,7 @@ extern "C" {
 #define SUCCESS           0x00
 #define BAD_CHECKSUM      0x01
 #define LENGTH_MISMATCH   0x02
-#define CIRQUE_I2C_ADDR 0x2A
-#define ALPS_I2C_ADDR   0x2C
+#define CIRQUE_I2C_ADDR 0x2C
 
 #define CIRQUE_HID_COMMAND_REGISTER 0x0005
 
