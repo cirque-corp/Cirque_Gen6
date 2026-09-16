@@ -298,6 +298,18 @@ bool API_C3_setPtpMode()
   return API_C3_checkRegister(REG_FEED_CONFIG4, feedConfig4);
 }
 
+bool API_C3_enableAdaptiveTouch(void)
+{
+  HB_HID_setFeatureReport8(ADAPTIVE_TOUCH_REPORT_ID, CIRQUE_HID_DATA_REGISTER, 1);
+  return true; // fire-and-forget: the firmware's GetReport handler for this ID doesn't echo state back
+}
+
+bool API_C3_disableAdaptiveTouch(void)
+{
+  HB_HID_setFeatureReport8(ADAPTIVE_TOUCH_REPORT_ID, CIRQUE_HID_DATA_REGISTER, 0);
+  return true;
+}
+
 bool API_C3_saveFactoryComp(void)
 {
   uint8_t compCommandFlag = API_C3_readRegister(REG_COMP_COMMAND);

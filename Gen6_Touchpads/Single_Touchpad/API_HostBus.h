@@ -17,6 +17,7 @@ extern "C" {
 #define CIRQUE_I2C_ADDR   0x2C
 
 #define CIRQUE_HID_COMMAND_REGISTER 0x0005
+#define CIRQUE_HID_DATA_REGISTER    0x0006
 
 typedef struct
 {
@@ -47,28 +48,26 @@ typedef struct
 	3) Host Data Ready line (Host_DR)
 	This section defines the operation of those three parts. */
 
-void HB_init(int I2CFrequency_0, uint8_t I2CAddress_0, int I2CFrequency_1, uint8_t I2CAddress_1);
+void HB_init(int I2CFrequency, uint8_t I2CAddress);
 
-uint8_t HB_DR_Asserted(void);
+bool HB_DR_Asserted(void);
 
 uint8_t HB_readDRViaI2C(void);
 
-void HB_readReport(uint8_t i2c_channel, uint8_t * packet, uint16_t readLength);
+void HB_readReport(uint8_t * packet, uint16_t readLength);
 
-uint8_t HB_readExtendedMemory(uint8_t i2c_channel, uint32_t, uint8_t *, uint16_t);
+uint8_t HB_readExtendedMemory(uint32_t, uint8_t *, uint16_t);
 
-void HB_writeExtendedMemory(uint8_t i2c_channel, uint32_t, uint8_t *, uint8_t);
+void HB_writeExtendedMemory(uint32_t, uint8_t *, uint8_t);
 
-void HB_HID_GetHidDescriptor(uint8_t i2c_channel, uint16_t HidDescAddr, HIDDescriptor_t * hidDescriptor);
-void HB_HID_SetPower(uint8_t i2c_channel, bool powerOn);
-void HB_HID_Reset(uint8_t i2c_channel);
-void HB_HID_readRegister(uint8_t i2c_channel, uint16_t hidRegister, uint8_t * buffer, uint16_t readLength);
-bool HB_HID_readReset(uint8_t i2c_channel);
-void HB_HID_getFeatureReport(uint8_t i2c_channel, uint8_t reportID, uint16_t dataRegister, uint8_t *inputBuffer, uint16_t inputLength);
-void HB_HID_setFeatureReport(uint8_t i2c_channel, uint8_t reportID, uint16_t dataRegister, uint16_t data);
-
-// void HB_ARA_readMemory(uint8_t i2c_channel, uint32_t address, uint8_t * result);
-// void HB_ARA_writeMemory(uint8_t i2c_channel, uint32_t address, uint8_t data);
+void HB_HID_GetHidDescriptor(uint16_t HidDescAddr, HIDDescriptor_t * hidDescriptor);
+void HB_HID_SetPower(bool powerOn);
+void HB_HID_Reset(void);
+void HB_HID_readRegister(uint16_t hidRegister, uint8_t * buffer, uint16_t readLength);
+bool HB_HID_readReset(void);
+void HB_HID_getFeatureReport(uint8_t reportID, uint16_t dataRegister, uint8_t *inputBuffer, uint16_t inputLength);
+void HB_HID_setFeatureReport(uint8_t reportID, uint16_t dataRegister, uint16_t data);
+void HB_HID_setFeatureReport8(uint8_t reportID, uint16_t dataRegister, uint8_t data);
 
 #ifdef __cplusplus
 }

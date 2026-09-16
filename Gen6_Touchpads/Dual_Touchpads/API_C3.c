@@ -304,6 +304,18 @@ bool API_C3_setPtpMode(uint8_t i2c_channel)
   return API_C3_checkRegister(i2c_channel, REG_FEED_CONFIG4, feedConfig4);
 }
 
+bool API_C3_enableAdaptiveTouch(uint8_t i2c_channel)
+{
+  HB_HID_setFeatureReport8(i2c_channel, ADAPTIVE_TOUCH_REPORT_ID, CIRQUE_HID_DATA_REGISTER, 1);
+  return true; // fire-and-forget: the firmware's GetReport handler for this ID doesn't echo state back
+}
+
+bool API_C3_disableAdaptiveTouch(uint8_t i2c_channel)
+{
+  HB_HID_setFeatureReport8(i2c_channel, ADAPTIVE_TOUCH_REPORT_ID, CIRQUE_HID_DATA_REGISTER, 0);
+  return true;
+}
+
 bool API_C3_saveFactoryComp(uint8_t i2c_channel)
 {
   uint8_t compCommandFlag = API_C3_readRegister(i2c_channel, REG_COMP_COMMAND);

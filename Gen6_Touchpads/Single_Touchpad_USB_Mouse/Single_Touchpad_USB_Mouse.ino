@@ -316,6 +316,16 @@ void processSerialCommand(char rxChar)
         Serial.println(F("Reading comp matrix"));
         printCompMatrix();
         break;
+
+    case 'b':
+        Serial.println(F("Adaptive Touch Enabled"));
+        API_C3_enableAdaptiveTouch();
+        break;
+
+    case 'B':
+        Serial.println(F("Adaptive Touch Disabled"));
+        API_C3_disableAdaptiveTouch();
+        break;
         
     case '\n' :
       break;
@@ -344,6 +354,8 @@ void printHelpTable()
   Serial.println(F("r\t-\tSet to Relative Mode (default)"));
   //Serial.println(F("S\t-\tSave Settings to Flash"));
   Serial.println(F("s\t-\tPrint System Info"));
+  Serial.println(F("b\t-\tEnable Adaptive Touch"));
+  Serial.println(F("B\t-\tDisable Adaptive Touch"));
   //Serial.println(F("t\t-\tEnable Tracking (default)"));
   //Serial.println(F("T\t-\tDisable Tracking"));
   //Serial.println(F("v\t-\tEnable Compensation (default)"));

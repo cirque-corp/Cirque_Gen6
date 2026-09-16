@@ -13,6 +13,7 @@ extern "C" {
 
 #define PTP_REPORT_ID			(0x01) /**<ID of a PTP Report*/
 #define MOUSE_REPORT_ID         (0x06) /**<ID of a Mouse Report */
+#define ADAPTIVE_TOUCH_REPORT_ID (0x19) /**<ID of the Adaptive Touch Mode feature report */
 #define PTP_CONTACT_BYTES       (5)
 #define PTP_HEADER_BYTES        (3)
 #define PTP_TRAILER_BYTES       (4)

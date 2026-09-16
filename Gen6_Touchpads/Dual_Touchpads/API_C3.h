@@ -257,6 +257,14 @@ bool API_C3_forceComp(uint8_t i2c_channel);
 */
 bool API_C3_disableComp(uint8_t i2c_channel);
 
+/** Enables Microsoft's Adaptive Touch mode (single contact reported, palm rejection disabled).
+    Sent as a HID feature report; there is no readable register to verify the result.
+*/
+bool API_C3_enableAdaptiveTouch(uint8_t i2c_channel);
+
+/** Disables Adaptive Touch mode, restoring normal multi-touch/palm rejection behavior. */
+bool API_C3_disableAdaptiveTouch(uint8_t i2c_channel);
+
 /** 
 * Saves the current comp matrix as the factory default matrix
 */

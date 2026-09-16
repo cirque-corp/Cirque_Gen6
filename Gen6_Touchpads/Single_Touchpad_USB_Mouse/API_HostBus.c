@@ -276,13 +276,27 @@ void HB_HID_getFeatureReport(uint8_t reportID, uint16_t dataRegister, uint8_t *i
 
 void HB_HID_setFeatureReport(uint8_t reportID, uint16_t dataRegister, uint16_t data)
 {
+  uint8_t cmd[12];
+  uint8_t cmdLength = SetupHidCommandBytes(cmd, sizeof(cmd), HID_CMD_SET_REPORT, reportID, HID_REPORT_TYPE_FEATURE);
+  cmd[cmdLength++] = (uint8_t)dataRegister;
+  cmd[cmdLength++] = (uint8_t)(dataRegister >> 8);
+  cmd[cmdLength++] = 0x05; // 2 length bytes + 1 report ID byte + 2 data bytes, per the I2C-HID SET_REPORT format
+  cmd[cmdLength++] = 0x00;
+  cmd[cmdLength++] = reportID; // Data Register payload must repeat the full report ID byte
+  cmd[cmdLength++] = (uint8_t)data;
+  cmd[cmdLength++] = (uint8_t)(data >> 8);
+  sendHidCommand(cmd, cmdLength, true);
+}
+
+void HB_HID_setFeatureReport8(uint8_t reportID, uint16_t dataRegister, uint8_t data)
+{
   uint8_t cmd[11];
   uint8_t cmdLength = SetupHidCommandBytes(cmd, sizeof(cmd), HID_CMD_SET_REPORT, reportID, HID_REPORT_TYPE_FEATURE);
   cmd[cmdLength++] = (uint8_t)dataRegister;
   cmd[cmdLength++] = (uint8_t)(dataRegister >> 8);
-  cmd[cmdLength++] = 0x04; // This function only allows 1 data word (2 bytes) so the length is fixed
+  cmd[cmdLength++] = 0x04; // 2 length bytes + 1 report ID byte + 1 data byte
   cmd[cmdLength++] = 0x00;
-  cmd[cmdLength++] = (uint8_t)data;
-  cmd[cmdLength++] = (uint8_t)(data >> 8);
+  cmd[cmdLength++] = reportID;
+  cmd[cmdLength++] = data;
   sendHidCommand(cmd, cmdLength, true);
 }

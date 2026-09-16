@@ -257,6 +257,14 @@ bool API_C3_forceComp(void);
 */
 bool API_C3_disableComp(void);
 
+/** Enables Microsoft's Adaptive Touch mode (single contact reported, palm rejection disabled).
+    Sent as a HID feature report; there is no readable register to verify the result.
+*/
+bool API_C3_enableAdaptiveTouch(void);
+
+/** Disables Adaptive Touch mode, restoring normal multi-touch/palm rejection behavior. */
+bool API_C3_disableAdaptiveTouch(void);
+
 /** 
 * Saves the current comp matrix as the factory default matrix
 */

@@ -17,6 +17,7 @@ extern "C" {
 #define CIRQUE_I2C_ADDR 0x2C
 
 #define CIRQUE_HID_COMMAND_REGISTER 0x0005
+#define CIRQUE_HID_DATA_REGISTER    0x0006
 
 typedef struct
 {
@@ -66,6 +67,7 @@ void HB_HID_readRegister(uint8_t i2c_channel, uint16_t hidRegister, uint8_t * bu
 bool HB_HID_readReset(uint8_t i2c_channel);
 void HB_HID_getFeatureReport(uint8_t i2c_channel, uint8_t reportID, uint16_t dataRegister, uint8_t *inputBuffer, uint16_t inputLength);
 void HB_HID_setFeatureReport(uint8_t i2c_channel, uint8_t reportID, uint16_t dataRegister, uint16_t data);
+void HB_HID_setFeatureReport8(uint8_t i2c_channel, uint8_t reportID, uint16_t dataRegister, uint8_t data);
 
 // void HB_ARA_readMemory(uint8_t i2c_channel, uint32_t address, uint8_t * result);
 // void HB_ARA_writeMemory(uint8_t i2c_channel, uint32_t address, uint8_t data);

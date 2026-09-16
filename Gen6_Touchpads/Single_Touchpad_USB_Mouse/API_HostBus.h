@@ -14,9 +14,10 @@ extern "C" {
 #define SUCCESS           0x00
 #define BAD_CHECKSUM      0x01
 #define LENGTH_MISMATCH   0x02
-#define CIRQUE_I2C_ADDR   0x2C
+#define CIRQUE_I2C_ADDR 0x2C
 
 #define CIRQUE_HID_COMMAND_REGISTER 0x0005
+#define CIRQUE_HID_DATA_REGISTER    0x0006
 
 typedef struct
 {
@@ -66,6 +67,7 @@ void HB_HID_readRegister(uint16_t hidRegister, uint8_t * buffer, uint16_t readLe
 bool HB_HID_readReset(void);
 void HB_HID_getFeatureReport(uint8_t reportID, uint16_t dataRegister, uint8_t *inputBuffer, uint16_t inputLength);
 void HB_HID_setFeatureReport(uint8_t reportID, uint16_t dataRegister, uint16_t data);
+void HB_HID_setFeatureReport8(uint8_t reportID, uint16_t dataRegister, uint8_t data);
 
 #ifdef __cplusplus
 }
