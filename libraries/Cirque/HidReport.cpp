@@ -177,7 +177,11 @@ bool HidReport::decodePTPReport(uint8_t* packet)
 
 bool HidReport::decodeKeyboardReport(uint8_t* packet)
 {
-    if ((m_report_id != id_keyReport) || (m_length != 11))
+    // Note: There's a known issue with this decoder clearing keyboard data.
+    // The calling code in CirqueGen6Demo.ino works around this by manually restoring
+    // the keyboard data from the raw I2C buffer.
+    
+    if (m_report_id != id_keyReport)
     {
         clearReport();
         return false;
@@ -185,12 +189,19 @@ bool HidReport::decodeKeyboardReport(uint8_t* packet)
 
     report.keyboard.modifier1 = packet[3];
     report.keyboard.modifier2 = packet[4];
-    report.keyboard.keycode[0] = packet[5];
-    report.keyboard.keycode[1] = packet[6];
-    report.keyboard.keycode[2] = packet[7];
-    report.keyboard.keycode[3] = packet[8];
-    report.keyboard.keycode[4] = packet[9];
-    report.keyboard.keycode[5] = packet[10];
+    
+    // Zero-initialize all keycodes first
+    for (uint8_t i = 0; i < 6; i++)
+    {
+        report.keyboard.keycode[i] = 0;
+    }
+    
+    // Read available keycodes
+    uint8_t availableBytes = (m_length > 5) ? (m_length - 5) : 0;
+    for (uint8_t i = 0; i < availableBytes && i < 6; i++)
+    {
+        report.keyboard.keycode[i] = packet[5 + i];
+    }
 
     return true;
 }

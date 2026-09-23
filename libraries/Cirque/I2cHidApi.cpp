@@ -22,12 +22,20 @@ reportIds_t I2cHidApi::getReport(HidReport & hidReport)
     reportIds_t result = id_unknown;
     uint16_t reportSize = sizeof(hidReportBuffer); // buffer is maximum size of hid report
     uint16_t readCount = m_host_bus->read(m_i2cAddress, reportSize); // reads maximum size for the report
-    if (readCount >= reportSize) // read all bytes
+    
+    if (readCount > 0)  // Changed from >= reportSize to > 0 - accept ANY data
     {
-        for (int x = 0; x < reportSize; x++)
+        // Read only what we actually got
+        for (int x = 0; x < readCount && x < reportSize; x++)
         {
             hidReportBuffer[x] = m_host_bus->fetch();
         }
+        // Zero out rest of buffer
+        for (int x = readCount; x < reportSize; x++)
+        {
+            hidReportBuffer[x] = 0;
+        }
+        
         if (hidReport.decodeReport(hidReportBuffer))  // report id and hid length okay
         {
             result = hidReport.reportId;
