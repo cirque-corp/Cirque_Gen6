@@ -39,6 +39,7 @@ keyReport_t prevKeyboardReport = {0, 0, {0, 0, 0, 0, 0, 0}}; // Track previous k
 // state data for the command loop (using key presses)
 bool enableContactReports = true;
 bool enableButtonReports = true;
+bool enableDataPrinting = true;
 
 void setup() {
   delay(30);
@@ -82,35 +83,8 @@ void loop() {
   // service DR
   if (HostBus.drAsserted())
   {
-    // Always do manual I2C read first to capture raw bytes
-    Wire.begin();
-    uint16_t rawReadCount = Wire.requestFrom(0x2C, 64, true);
-    Wire.end();
-    
-    uint8_t rawBuffer[64] = {0};
-    Wire.begin();
-    for (int i = 0; i < rawReadCount && i < 64; i++) {
-      int val = Wire.read();
-      rawBuffer[i] = (val >= 0) ? val : 0;
-    }
-    Wire.end();
-    
-    // Use library's decoder to set report ID and length
-    hidReport.decodeReport(rawBuffer);
-    
-    // WORKAROUND: For keyboard reports, library's decoder clears data, so restore it manually
-    if (hidReport.reportId == id_keyReport && rawReadCount >= 6) {
-      uint16_t length = (uint16_t)(rawBuffer[1] << 8) + rawBuffer[0];
-      if (length == 6) {
-        // Manually set the keyboard data from raw buffer
-        hidReport.report.keyboard.modifier1 = rawBuffer[3];
-        hidReport.report.keyboard.modifier2 = rawBuffer[4];
-        hidReport.report.keyboard.keycode[0] = rawBuffer[5];
-        for (int i = 1; i < 6; i++) {
-          hidReport.report.keyboard.keycode[i] = (5 + i < rawReadCount) ? rawBuffer[5 + i] : 0;
-        }
-      }
-    }
+    // Let the library decode the report normally
+    cirqueHid.getReport(hidReport);
     
     printHidReport(hidReport);
   }
@@ -220,6 +194,20 @@ void processKeys(void)
         HostBus.setPower(false);
         delay(100);
         setup();
+        break;
+      case 'd':
+        Serial.println(F("Data Printing Disabled"));
+        enableDataPrinting = false;
+        break;
+      case 'D':
+        Serial.println(F("Data Printing Enabled"));
+        enableDataPrinting = true;
+        break;
+      case 'o':
+        Serial.println(F("System Information:"));
+        identifyDevice();
+        readDefaults();
+        break;
       default:
         break;
     }
@@ -228,18 +216,41 @@ void processKeys(void)
 
 void showHelp(void)
 {
-  Serial.println(F("Commands"));
-  Serial.println(F("  m - issue PTP reports, M - issue Mouse reports"));
-  Serial.println(F("  p - HID power off, P - HID power on"));
-  Serial.println(F("  r - don't report contacts, R - report contacts"));
-  Serial.println(F("  b - don't report buttons, B - report buttons"));
-  Serial.println(F("  x - don't invert x-axis, X - invert x-axis"));
-  Serial.println(F("  y - don't invert y-axis, Y - invert y-axis"));
-  Serial.println(F("  s - unswap x-y, S - swap x-y"));
-  Serial.println(F("  i - cancel 'force sleep', I - 'force sleep'"));
-  Serial.println(F("  w - warm boot"));
-  Serial.println(F("  g - get device capabilities"));
+  Serial.println(F("Available Commands (case sensitive)"));
+  Serial.println(F(""));
+  Serial.println(F("--- Report Modes ---"));
+  Serial.println(F("  m - issue PTP reports"));
+  Serial.println(F("  M - issue Mouse reports"));
+  Serial.println(F(""));
+  Serial.println(F("--- Power Control ---"));
+  Serial.println(F("  p - HID power off"));
+  Serial.println(F("  P - HID power on"));
+  Serial.println(F("  w - warm boot (reset)"));
+  Serial.println(F("  i - cancel force-sleep"));
+  Serial.println(F("  I - force sleep"));
   Serial.println(F("  $ - physical power off, then on"));
+  Serial.println(F(""));
+  Serial.println(F("--- Reporting Control ---"));
+  Serial.println(F("  r - don't report contacts"));
+  Serial.println(F("  R - report contacts"));
+  Serial.println(F("  b - don't report buttons"));
+  Serial.println(F("  B - report buttons"));
+  Serial.println(F("  d - data printing off"));
+  Serial.println(F("  D - data printing on"));
+  Serial.println(F(""));
+  Serial.println(F("--- Axis Control ---"));
+  Serial.println(F("  x - don't invert x-axis"));
+  Serial.println(F("  X - invert x-axis"));
+  Serial.println(F("  y - don't invert y-axis"));
+  Serial.println(F("  Y - invert y-axis"));
+  Serial.println(F("  s - unswap x-y"));
+  Serial.println(F("  S - swap x-y"));
+  Serial.println(F(""));
+  Serial.println(F("--- Information ---"));
+  Serial.println(F("  g - get device capabilities"));
+  Serial.println(F("  o - show system information"));
+  Serial.println(F("  h, ? - print this help"));
+  Serial.println(F(""));
 }
 
 void turnOnPower(void)
@@ -326,7 +337,22 @@ void printHidReport(HidReport & report)
       {
         readingTwoReports = false;
       }
-      // organize data
+      
+      // IMPORTANT: Clear all finger data at the start of each PTP report
+      // This ensures inactive fingers don't persist with stale coordinates
+      if (!readingTwoReports)
+      {
+        for (int x = 0; x < TOTAL_FINGERS; x++)
+        {
+          fingerData[x].contactID = x;
+          fingerData[x].confidence = 0;
+          fingerData[x].tip = 0;
+          fingerData[x].x = 0;
+          fingerData[x].y = 0;
+        }
+      }
+      
+      // organize data - populate only fingers present in this report
       for (int x = 0; x < MAX_PTP_FINGER_COUNT; x++)
       {
         PtpFingerData_t * finger = &report.report.ptp.fingers[x];

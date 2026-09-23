@@ -177,10 +177,6 @@ bool HidReport::decodePTPReport(uint8_t* packet)
 
 bool HidReport::decodeKeyboardReport(uint8_t* packet)
 {
-    // Note: There's a known issue with this decoder clearing keyboard data.
-    // The calling code in CirqueGen6Demo.ino works around this by manually restoring
-    // the keyboard data from the raw I2C buffer.
-    
     if (m_report_id != id_keyReport)
     {
         clearReport();
