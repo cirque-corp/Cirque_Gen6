@@ -447,7 +447,7 @@ void printDecodeFailureDebug(const uint8_t* packet, uint8_t dr_status)
   }
   if((reportId != PTP_REPORT_ID) && (reportId != MOUSE_REPORT_ID))
   {
-    Serial.println(F("Possible cause: unexpected report ID (not PTP/MOUSE)"));
+    Serial.println(F("Possible cause: unexpected report ID (not PTP/MOUSE/KEYBOARD)"));
   }
 
   Serial.println(F("First 12 packet bytes:"));
@@ -522,6 +522,9 @@ void printDataReport(HID_report_t * report)
         break;
     case PTP_REPORT_ID:
         printPtpReport(report);
+        break;
+    case KEY_REPORT_ID:
+        printKeyboardReport(report);
         break;
     default:
         Serial.println(F("Error: Unknown Report ID"));
@@ -613,6 +616,131 @@ void printPtpReport(HID_report_t * report)
    
 }
 
+/** Prints the information stored in a keyboard report to serial */
+void printKeyboardReport(HID_report_t* report)
+{
+  char strBuf[50];
+  sprintf(strBuf,"ReportID: 0x%02X",report->reportID);
+  Serial.print(strBuf);
+  Serial.print(F(", Modifiers: "));
+  printModifierNames(report->keyboard.modifier1);
+  Serial.print(F(", Keycodes:"));
+  for (uint8_t i = 0; i < 6; i++)
+  {
+    if(report->keyboard.keycode[i] != 0)
+    {
+      Serial.print(F(" "));
+      printKeycodeName(report->keyboard.keycode[i]);
+    }
+  }
+  Serial.println();
+}
+
+/**************************************************************/
+/*********** KEYBOARD MODIFIER AND KEYCODE HELPERS ************/
+
+/** Prints modifier key names based on modifier byte */
+void printModifierNames(uint8_t modifiers)
+{
+  bool anyModifier = false;
+  
+  if (modifiers & 0x01) { Serial.print(F("L_CTRL(0x01) ")); anyModifier = true; }
+  if (modifiers & 0x02) { Serial.print(F("L_SHIFT(0x02) ")); anyModifier = true; }
+  if (modifiers & 0x04) { Serial.print(F("L_ALT(0x04) ")); anyModifier = true; }
+  if (modifiers & 0x08) { Serial.print(F("L_GUI(0x08) ")); anyModifier = true; }
+  if (modifiers & 0x10) { Serial.print(F("R_CTRL(0x10) ")); anyModifier = true; }
+  if (modifiers & 0x20) { Serial.print(F("R_SHIFT(0x20) ")); anyModifier = true; }
+  if (modifiers & 0x40) { Serial.print(F("R_ALT(0x40) ")); anyModifier = true; }
+  if (modifiers & 0x80) { Serial.print(F("R_GUI(0x80) ")); anyModifier = true; }
+  
+  if (!anyModifier) { Serial.print(F("NONE(0x00) ")); }
+}
+
+/** Prints keycode name based on USB HID keycode */
+void printKeycodeName(uint8_t keycode)
+{
+  char strBuf[30];
+  
+  // Alphanumeric keys (0x04-0x1D = A-Z, 0x1E-0x27 = 1-0)
+  if (keycode >= 0x04 && keycode <= 0x1D) {
+    sprintf(strBuf, "%c(0x%02X)", (keycode == 0x04 ? 'A' : 'A' + (keycode - 0x04)), keycode);
+    Serial.print(strBuf);
+  }
+  else if (keycode >= 0x1E && keycode <= 0x27) {
+    uint8_t num = (keycode == 0x27 ? 0 : 1 + (keycode - 0x1E));
+    sprintf(strBuf, "%d(0x%02X)", num, keycode);
+    Serial.print(strBuf);
+  }
+  // Special keys
+  else {
+    const char* name = "";
+    switch(keycode) {
+      case 0x28: name = "ENTER"; break;
+      case 0x29: name = "ESC"; break;
+      case 0x2A: name = "BACKSPACE"; break;
+      case 0x2B: name = "TAB"; break;
+      case 0x2C: name = "SPACE"; break;
+      case 0x2D: name = "MINUS"; break;
+      case 0x2E: name = "EQUALS"; break;
+      case 0x2F: name = "L_BRACKET"; break;
+      case 0x30: name = "R_BRACKET"; break;
+      case 0x31: name = "BACKSLASH"; break;
+      case 0x33: name = "SEMICOLON"; break;
+      case 0x34: name = "APOSTROPHE"; break;
+      case 0x35: name = "BACKTICK"; break;
+      case 0x36: name = "COMMA"; break;
+      case 0x37: name = "PERIOD"; break;
+      case 0x38: name = "SLASH"; break;
+      case 0x39: name = "CAPS_LOCK"; break;
+      case 0x3A: name = "F1"; break;
+      case 0x3B: name = "F2"; break;
+      case 0x3C: name = "F3"; break;
+      case 0x3D: name = "F4"; break;
+      case 0x3E: name = "F5"; break;
+      case 0x3F: name = "F6"; break;
+      case 0x40: name = "F7"; break;
+      case 0x41: name = "F8"; break;
+      case 0x42: name = "F9"; break;
+      case 0x43: name = "F10"; break;
+      case 0x44: name = "F11"; break;
+      case 0x45: name = "F12"; break;
+      case 0x46: name = "PRINT_SCREEN"; break;
+      case 0x47: name = "SCROLL_LOCK"; break;
+      case 0x48: name = "PAUSE"; break;
+      case 0x49: name = "INSERT"; break;
+      case 0x4A: name = "HOME"; break;
+      case 0x4B: name = "PAGE_UP"; break;
+      case 0x4C: name = "DELETE"; break;
+      case 0x4D: name = "END"; break;
+      case 0x4E: name = "PAGE_DOWN"; break;
+      case 0x4F: name = "RIGHT"; break;
+      case 0x50: name = "LEFT"; break;
+      case 0x51: name = "DOWN"; break;
+      case 0x52: name = "UP"; break;
+      case 0x53: name = "NUM_LOCK"; break;
+      case 0x54: name = "KP_DIVIDE"; break;
+      case 0x55: name = "KP_MULTIPLY"; break;
+      case 0x56: name = "KP_MINUS"; break;
+      case 0x57: name = "KP_PLUS"; break;
+      case 0x58: name = "KP_ENTER"; break;
+      case 0x59: name = "KP_1"; break;
+      case 0x5A: name = "KP_2"; break;
+      case 0x5B: name = "KP_3"; break;
+      case 0x5C: name = "KP_4"; break;
+      case 0x5D: name = "KP_5"; break;
+      case 0x5E: name = "KP_6"; break;
+      case 0x5F: name = "KP_7"; break;
+      case 0x60: name = "KP_8"; break;
+      case 0x61: name = "KP_9"; break;
+      case 0x62: name = "KP_0"; break;
+      case 0x63: name = "KP_PERIOD"; break;
+      default: sprintf(strBuf, "UNKNOWN(0x%02X)", keycode); Serial.print(strBuf); return;
+    }
+    sprintf(strBuf, "%s(0x%02X)", name, keycode);
+    Serial.print(strBuf);
+  }
+}
+
 /**************************************************************/
 /*************** FUNCTIONS FOR PRINTING EVENTS ****************/
 
@@ -622,6 +750,7 @@ void printPtpReport(HID_report_t * report)
 */
 HID_report_t prevMouseReport_g;     /**< Most recent past Mouse report */
 HID_report_t prevPtpReport_g;
+HID_report_t prevKeyboardReport_g;  /**< Most recent past Keyboard report */
 
 /** Prints all the events that correspond to cur_report.
     Determines which printing function to use from the reportID */
@@ -636,6 +765,10 @@ void printEvent(HID_report_t* cur_report)
     case PTP_REPORT_ID:
         printPtpReportEvents(cur_report, &prevPtpReport_g);
         prevPtpReport_g = *cur_report;
+        break;
+    case KEY_REPORT_ID:
+        printKeyboardReportEvents(cur_report, &prevKeyboardReport_g);
+        prevKeyboardReport_g = *cur_report;
         break;
     default:
         Serial.println(F("NOT VALID REPORT FOR EVENTS"));
@@ -659,6 +792,78 @@ void printPtpReportEvents(HID_report_t * cur_report, HID_report_t * prev_report)
     if(prev_report->reportID == PTP_REPORT_ID)
     {
         printButtonEvents(cur_report, prev_report);
+    }
+}
+
+void printKeyboardReportEvents(HID_report_t * cur_report, HID_report_t * prev_report)
+{
+    bool modifierChanged = false;
+    bool keyChanged = false;
+    
+    if(prev_report->reportID != KEY_REPORT_ID)
+    {
+        // No previous keyboard state to compare against
+        return;
+    }
+    
+    // Check for modifier changes
+    if (cur_report->keyboard.modifier1 != prev_report->keyboard.modifier1 || 
+        cur_report->keyboard.modifier2 != prev_report->keyboard.modifier2)
+    {
+        Serial.print(F("  Modifier change: "));
+        printModifierNames(cur_report->keyboard.modifier1);
+        Serial.print(F("(was "));
+        printModifierNames(prev_report->keyboard.modifier1);
+        Serial.println(F(")"));
+        modifierChanged = true;
+    }
+    
+    // Check for new key presses
+    for (uint8_t i = 0; i < 6; i++)
+    {
+        if (cur_report->keyboard.keycode[i] != 0)
+        {
+            bool foundInPrevious = false;
+            for (uint8_t j = 0; j < 6; j++)
+            {
+                if (cur_report->keyboard.keycode[i] == prev_report->keyboard.keycode[j])
+                {
+                    foundInPrevious = true;
+                    break;
+                }
+            }
+            if (!foundInPrevious)
+            {
+                Serial.print(F("  Key pressed: "));
+                printKeycodeName(cur_report->keyboard.keycode[i]);
+                Serial.println();
+                keyChanged = true;
+            }
+        }
+    }
+    
+    // Check for key releases
+    for (uint8_t i = 0; i < 6; i++)
+    {
+        if (prev_report->keyboard.keycode[i] != 0)
+        {
+            bool foundInCurrent = false;
+            for (uint8_t j = 0; j < 6; j++)
+            {
+                if (prev_report->keyboard.keycode[i] == cur_report->keyboard.keycode[j])
+                {
+                    foundInCurrent = true;
+                    break;
+                }
+            }
+            if (!foundInCurrent)
+            {
+                Serial.print(F("  Key released: "));
+                printKeycodeName(prev_report->keyboard.keycode[i]);
+                Serial.println();
+                keyChanged = true;
+            }
+        }
     }
 }
 

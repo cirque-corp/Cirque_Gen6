@@ -109,21 +109,22 @@ bool HID_decodeMouseReport(uint8_t* packet, HID_report_t* result)
 
 bool HID_decodeKeyboardReport(uint8_t* packet, HID_report_t* result)
 {
-    if((packet[REPORT_ID] != KEY_REPORT_ID) || (result->reportLength != 11))
+    if((packet[REPORT_ID] != KEY_REPORT_ID) || (result->reportLength < 6))
     {
-        //it's not a keyboard report - exit
         clearReport(result);
         return false;
     }
 
     result->keyboard.modifier1 = packet[3];
     result->keyboard.modifier2 = packet[4];
-    result->keyboard.keycode[0] = packet[5];
-    result->keyboard.keycode[1] = packet[6];
-    result->keyboard.keycode[2] = packet[7];
-    result->keyboard.keycode[3] = packet[8];
-    result->keyboard.keycode[4] = packet[9];
-    result->keyboard.keycode[5] = packet[10];
+    // Safely read keycode slots, zero-filling any beyond the packet length
+    for (uint8_t i = 0; i < 6; i++)
+    {
+      if ((5 + i) < result->reportLength)
+        result->keyboard.keycode[i] = packet[5 + i];
+      else
+        result->keyboard.keycode[i] = 0;
+    }
 
     return true;
 }
