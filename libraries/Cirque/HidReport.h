@@ -16,6 +16,7 @@ public:
     AnyHIDReport_t report;
 
     bool decodeReport(uint8_t* packet);
+    void dumpRawPacket();  // Debug function to print last raw packet
 
     // bool isFingerValid(uint8_t finger_num);
     // bool isFingerTouching(uint8_t finger_num);
@@ -25,6 +26,8 @@ public:
 protected:
     uint16_t m_length;
     reportIds_t m_report_id;
+    uint8_t m_lastPacket[64];  // Store last packet for debugging
+    uint16_t m_lastPacketLength;
 
     void clear(void);
     void clearReport(void);

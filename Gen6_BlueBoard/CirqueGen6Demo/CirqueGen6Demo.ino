@@ -14,6 +14,7 @@
 #include <DataUtils.h>
 #include <Cirque.h> // if the library is installed from Library Manager you might not need this
 #include <Teensy4_HostBusLayer.h>
+#include <USB_Keycodes.h>
 
 // Create a specific Host Bus object (Teensy4_HostBusLayer works on the blue board). 
 // The global variable HostBus will become it. All the common code then uses HostBus.
@@ -40,6 +41,7 @@ keyReport_t prevKeyboardReport = {0, 0, {0, 0, 0, 0, 0, 0}}; // Track previous k
 bool enableContactReports = true;
 bool enableButtonReports = true;
 bool enableDataPrinting = true;
+bool enableRawPacketPrint = false;  // Toggle for raw packet hex dump
 
 // Feed control register definitions
 #define REG_FEED_CONFIG3              (0x200E000A)
@@ -210,6 +212,14 @@ void processKeys(void)
         Serial.println(F("Data Printing Enabled"));
         enableDataPrinting = true;
         break;
+      case 'z':
+        enableRawPacketPrint = !enableRawPacketPrint;
+        if (enableRawPacketPrint) {
+          Serial.println(F("Raw Packet Hex Dump Enabled"));
+        } else {
+          Serial.println(F("Raw Packet Hex Dump Disabled"));
+        }
+        break;
       case 'o':
         Serial.println(F("System Information:"));
         identifyDevice();
@@ -266,6 +276,7 @@ void showHelp(void)
   Serial.println(F("--- Information ---"));
   Serial.println(F("  g - get device capabilities"));
   Serial.println(F("  o - show system information"));
+  Serial.println(F("  z - toggle raw packet hex dump"));
   Serial.println(F("  h, ? - print this help"));
   Serial.println(F(""));
 }
@@ -413,6 +424,12 @@ void printHidReport(HidReport & report)
     default :
     break;
   }
+  
+  // Print raw packet if enabled
+  if (enableRawPacketPrint)
+  {
+    report.dumpRawPacket();
+  }
 }
 
 void readDefaults(void)
@@ -488,86 +505,10 @@ void printModifierNames(uint8_t modifiers)
 /** Prints keycode name based on USB HID keycode */
 void printKeycodeName(uint8_t keycode)
 {
-  char strBuf[30];
-  
-  // Alphanumeric keys (0x04-0x1D = A-Z, 0x1E-0x27 = 1-0)
-  if (keycode >= 0x04 && keycode <= 0x1D) {
-    sprintf(strBuf, "%c(0x%02X)", (keycode == 0x04 ? 'A' : 'A' + (keycode - 0x04)), keycode);
-    Serial.print(strBuf);
-  }
-  else if (keycode >= 0x1E && keycode <= 0x27) {
-    uint8_t num = (keycode == 0x27 ? 0 : 1 + (keycode - 0x1E));
-    sprintf(strBuf, "%d(0x%02X)", num, keycode);
-    Serial.print(strBuf);
-  }
-  // Special keys
-  else {
-    const char* name = "";
-    switch(keycode) {
-      case 0x28: name = "ENTER"; break;
-      case 0x29: name = "ESC"; break;
-      case 0x2A: name = "BACKSPACE"; break;
-      case 0x2B: name = "TAB"; break;
-      case 0x2C: name = "SPACE"; break;
-      case 0x2D: name = "MINUS"; break;
-      case 0x2E: name = "EQUALS"; break;
-      case 0x2F: name = "L_BRACKET"; break;
-      case 0x30: name = "R_BRACKET"; break;
-      case 0x31: name = "BACKSLASH"; break;
-      case 0x33: name = "SEMICOLON"; break;
-      case 0x34: name = "APOSTROPHE"; break;
-      case 0x35: name = "BACKTICK"; break;
-      case 0x36: name = "COMMA"; break;
-      case 0x37: name = "PERIOD"; break;
-      case 0x38: name = "SLASH"; break;
-      case 0x39: name = "CAPS_LOCK"; break;
-      case 0x3A: name = "F1"; break;
-      case 0x3B: name = "F2"; break;
-      case 0x3C: name = "F3"; break;
-      case 0x3D: name = "F4"; break;
-      case 0x3E: name = "F5"; break;
-      case 0x3F: name = "F6"; break;
-      case 0x40: name = "F7"; break;
-      case 0x41: name = "F8"; break;
-      case 0x42: name = "F9"; break;
-      case 0x43: name = "F10"; break;
-      case 0x44: name = "F11"; break;
-      case 0x45: name = "F12"; break;
-      case 0x46: name = "PRINT_SCREEN"; break;
-      case 0x47: name = "SCROLL_LOCK"; break;
-      case 0x48: name = "PAUSE"; break;
-      case 0x49: name = "INSERT"; break;
-      case 0x4A: name = "HOME"; break;
-      case 0x4B: name = "PAGE_UP"; break;
-      case 0x4C: name = "DELETE"; break;
-      case 0x4D: name = "END"; break;
-      case 0x4E: name = "PAGE_DOWN"; break;
-      case 0x4F: name = "RIGHT"; break;
-      case 0x50: name = "LEFT"; break;
-      case 0x51: name = "DOWN"; break;
-      case 0x52: name = "UP"; break;
-      case 0x53: name = "NUM_LOCK"; break;
-      case 0x54: name = "KP_DIVIDE"; break;
-      case 0x55: name = "KP_MULTIPLY"; break;
-      case 0x56: name = "KP_MINUS"; break;
-      case 0x57: name = "KP_PLUS"; break;
-      case 0x58: name = "KP_ENTER"; break;
-      case 0x59: name = "KP_1"; break;
-      case 0x5A: name = "KP_2"; break;
-      case 0x5B: name = "KP_3"; break;
-      case 0x5C: name = "KP_4"; break;
-      case 0x5D: name = "KP_5"; break;
-      case 0x5E: name = "KP_6"; break;
-      case 0x5F: name = "KP_7"; break;
-      case 0x60: name = "KP_8"; break;
-      case 0x61: name = "KP_9"; break;
-      case 0x62: name = "KP_0"; break;
-      case 0x63: name = "KP_PERIOD"; break;
-      default: sprintf(strBuf, "UNKNOWN(0x%02X)", keycode); Serial.print(strBuf); return;
-    }
-    sprintf(strBuf, "%s(0x%02X)", name, keycode);
-    Serial.print(strBuf);
-  }
+  char strBuf[40];
+  const char* name = getKeycodeName(keycode);
+  sprintf(strBuf, "%s(0x%02X)", name, keycode);
+  Serial.print(strBuf);
 }
 
 /** Prints keyboard events by comparing current and previous reports */

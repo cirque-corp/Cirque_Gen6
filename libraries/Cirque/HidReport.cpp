@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
 
 #include "HidReport.h"
+#include <Arduino.h>
 #include <cstring>
 
 // *** HidReport ***
@@ -23,6 +24,7 @@ void HidReport::clear(void)
 {
     m_report_id = id_unknown;
     m_length = 0;
+    m_lastPacketLength = 0;
 }
 
 void HidReport::clearReport(void)
@@ -32,6 +34,13 @@ void HidReport::clearReport(void)
 
 bool HidReport::decodeReport(uint8_t* packet)
 {
+    // Store raw packet for debugging
+    if (packet[0] <= 62) {  // Ensure we don't overflow the 64-byte buffer
+        m_lastPacketLength = packet[0] + (packet[1] << 8);
+        if (m_lastPacketLength > 64) m_lastPacketLength = 64;
+        memcpy(m_lastPacket, packet, m_lastPacketLength);
+    }
+    
     bool decoded_okay = decodeLengthAndId(packet);
     switch (m_report_id)
     {
@@ -192,7 +201,7 @@ bool HidReport::decodeKeyboardReport(uint8_t* packet)
         report.keyboard.keycode[i] = 0;
     }
     
-    // Read available keycodes
+    // Read available keycodes (handle variable packet lengths)
     uint8_t availableBytes = (m_length > 5) ? (m_length - 5) : 0;
     for (uint8_t i = 0; i < availableBytes && i < 6; i++)
     {
@@ -200,5 +209,18 @@ bool HidReport::decodeKeyboardReport(uint8_t* packet)
     }
 
     return true;
+}
+
+/** Debug function: Print the raw packet bytes for diagnosis */
+void HidReport::dumpRawPacket(void)
+{
+    Serial.print(F("Raw Packet ("));
+    Serial.print(m_lastPacketLength);
+    Serial.print(F(" bytes): "));
+    for (uint16_t i = 0; i < m_lastPacketLength; i++)
+    {
+        Serial.printf("0x%02X ", m_lastPacket[i]);
+    }
+    Serial.println();
 }
 
