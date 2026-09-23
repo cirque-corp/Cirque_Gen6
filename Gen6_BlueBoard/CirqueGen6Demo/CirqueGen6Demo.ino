@@ -41,6 +41,12 @@ bool enableContactReports = true;
 bool enableButtonReports = true;
 bool enableDataPrinting = true;
 
+// Feed control register definitions
+#define REG_FEED_CONFIG3              (0x200E000A)
+#define FC3_PS2_FEED_ENABLE           (0x01)
+#define FC3_I2C_FEED_ENABLE           (0x02)
+#define FC3_USB_FEED_ENABLE           (0x04)
+
 void setup() {
   delay(30);
   // put your setup code here, to run once:
@@ -74,6 +80,7 @@ void setup() {
     fingerDataReady[x] = false;
   }
 
+  Serial.println(F("\nCirque Gen6 Demo"));
   Serial.println(F("'h' or '?' - help"));
 }
 
@@ -208,6 +215,14 @@ void processKeys(void)
         identifyDevice();
         readDefaults();
         break;
+      case 'f':
+        Serial.println(F("Feed Enabled"));
+        cirque_enableFeed();
+        break;
+      case 'F':
+        Serial.println(F("Feed Disabled"));
+        cirque_disableFeed();
+        break;
       default:
         break;
     }
@@ -235,6 +250,8 @@ void showHelp(void)
   Serial.println(F("  R - report contacts"));
   Serial.println(F("  b - don't report buttons"));
   Serial.println(F("  B - report buttons"));
+  Serial.println(F("  f - enable feed"));
+  Serial.println(F("  F - disable feed"));
   Serial.println(F("  d - data printing off"));
   Serial.println(F("  D - data printing on"));
   Serial.println(F(""));
@@ -615,4 +632,22 @@ void printKeyboardReportEvents(HidReport & report)
     
     // Update previous state for next comparison
     prevKeyboardReport = report.report.keyboard;
+}
+
+/** Enable I2C feed for data reporting */
+void cirque_enableFeed(void)
+{
+    uint8_t feedConfig3 = 0;
+    cirqueHid.readExtendedMemory(REG_FEED_CONFIG3, &feedConfig3, 1);
+    feedConfig3 |= FC3_I2C_FEED_ENABLE;
+    cirqueHid.writeExtendedMemory(REG_FEED_CONFIG3, &feedConfig3, 1);
+}
+
+/** Disable all feeds (I2C, PS2, USB) */
+void cirque_disableFeed(void)
+{
+    uint8_t feedConfig3 = 0;
+    cirqueHid.readExtendedMemory(REG_FEED_CONFIG3, &feedConfig3, 1);
+    feedConfig3 &= ~(FC3_PS2_FEED_ENABLE | FC3_I2C_FEED_ENABLE | FC3_USB_FEED_ENABLE);
+    cirqueHid.writeExtendedMemory(REG_FEED_CONFIG3, &feedConfig3, 1);
 }

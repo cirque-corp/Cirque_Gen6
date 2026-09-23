@@ -575,8 +575,8 @@ void printKeycodeName(uint8_t keycode)
   }
 }
 
-/**************************************************************/
-/*************** FUNCTIONS FOR PRINTING EVENTS ****************/
+/** Prints the information stored in a PTP report to serial */
+void printPtpReport(HID_report_t* report)
 {
   char strBuf[50];
   uint8_t i;
@@ -693,9 +693,6 @@ void printPtpReportEvents(HID_report_t * cur_report, HID_report_t * prev_report)
 
 void printKeyboardReportEvents(HID_report_t * cur_report, HID_report_t * prev_report)
 {
-    bool modifierChanged = false;
-    bool keyChanged = false;
-    
     if(prev_report->reportID != KEY_REPORT_ID)
     {
         // No previous keyboard state to compare against
@@ -711,7 +708,6 @@ void printKeyboardReportEvents(HID_report_t * cur_report, HID_report_t * prev_re
         Serial.print(F(" (was 0x"));
         Serial.print(prev_report->keyboard.modifier1, HEX);
         Serial.println(F(")"));
-        modifierChanged = true;
     }
     
     // Check for new key presses
@@ -732,7 +728,6 @@ void printKeyboardReportEvents(HID_report_t * cur_report, HID_report_t * prev_re
             {
                 Serial.print(F("  Key pressed: 0x"));
                 Serial.println(cur_report->keyboard.keycode[i], HEX);
-                keyChanged = true;
             }
         }
     }
@@ -755,7 +750,6 @@ void printKeyboardReportEvents(HID_report_t * cur_report, HID_report_t * prev_re
             {
                 Serial.print(F("  Key released: 0x"));
                 Serial.println(prev_report->keyboard.keycode[i], HEX);
-                keyChanged = true;
             }
         }
     }
