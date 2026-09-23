@@ -71,6 +71,9 @@ bool HID_decodeReport(uint8_t* packet, HID_report_t* result)
     case MOUSE_REPORT_ID:
       decoded_ok = HID_decodeMouseReport(packet, result);
       break;
+    case KEY_REPORT_ID:
+      decoded_ok = HID_decodeKeyboardReport(packet, result);
+      break;
     default:
       clearReport(result); //return an empty report
       break;
@@ -102,6 +105,27 @@ bool HID_decodeMouseReport(uint8_t* packet, HID_report_t* result)
     }
 	
 	return true;
+}
+
+bool HID_decodeKeyboardReport(uint8_t* packet, HID_report_t* result)
+{
+    if((packet[REPORT_ID] != KEY_REPORT_ID) || (result->reportLength != 11))
+    {
+        //it's not a keyboard report - exit
+        clearReport(result);
+        return false;
+    }
+
+    result->keyboard.modifier1 = packet[3];
+    result->keyboard.modifier2 = packet[4];
+    result->keyboard.keycode[0] = packet[5];
+    result->keyboard.keycode[1] = packet[6];
+    result->keyboard.keycode[2] = packet[7];
+    result->keyboard.keycode[3] = packet[8];
+    result->keyboard.keycode[4] = packet[9];
+    result->keyboard.keycode[5] = packet[10];
+
+    return true;
 }
 
 bool HID_decodePTPReport(uint8_t* packet, HID_report_t* result)

@@ -13,6 +13,7 @@ extern "C" {
 
 #define PTP_REPORT_ID			(0x01) /**<ID of a PTP Report*/
 #define MOUSE_REPORT_ID         (0x06) /**<ID of a Mouse Report */
+#define KEY_REPORT_ID           (0x08) /**<ID of a Keyboard Report */
 #define ADAPTIVE_TOUCH_REPORT_ID (0x19) /**<ID of the Adaptive Touch Mode feature report */
 #define PTP_CONTACT_BYTES       (5)
 #define PTP_HEADER_BYTES        (3)
@@ -61,6 +62,14 @@ typedef struct
 	uint8_t  buttons;
 } PtpReport_t;
 
+/** Contains the data from a keyboard report packet.*/
+typedef struct
+{
+    uint8_t modifier1;      /**< Alt, Ctrl, GUI keys */
+    uint8_t modifier2;
+    uint8_t keycode[6];     /**< Keycodes pressed, only the first one is used for now */
+} keyboardReport_t;
+
 /** Struct that describes a generic report.
     This is a convienent container for handling report data.
     Use the reportID to know which member of the Union to use.*/
@@ -70,6 +79,7 @@ typedef struct
     {
         mouseReport_t mouse;        	/** < Treat the data as a mouse report */
         PtpReport_t 	ptp;			/**< Treats the data as a ptp report */
+        keyboardReport_t keyboard;		/**< Treats the data as a keyboard report */
     };
     uint16_t reportLength;
     uint8_t reportID;   /**< ID of the report. Shows what type of report to use */
@@ -84,6 +94,7 @@ bool HID_decodeReport(uint8_t* packet, HID_report_t* result);
 
 bool HID_decodeMouseReport(uint8_t* packet, HID_report_t* result);
 bool HID_decodePTPReport(uint8_t* packet, HID_report_t* result);
+bool HID_decodeKeyboardReport(uint8_t* packet, HID_report_t* result);
 
 // // Query functions
 bool HID_isButtonPressed(HID_report_t* report, uint8_t buttonMask);

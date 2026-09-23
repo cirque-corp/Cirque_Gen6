@@ -10,6 +10,7 @@
 #define USE_DR_I2C 0 // Reads out if data is ready through I2C instead of the interrupt pin
 
 void printMouseReport(HID_report_t * report);
+void printKeyboardReport(HID_report_t * report);
 void printRawHidPacket(const uint8_t* packet, uint16_t packetLength);
 void printDecodeFailureDebug(const uint8_t* packet, uint8_t dr_status);
 
@@ -418,6 +419,9 @@ void printDataReport(HID_report_t * report)
     case PTP_REPORT_ID:
         printPtpReport(report);
         break;
+    case KEY_REPORT_ID:
+        printKeyboardReport(report);
+        break;
     default:
         Serial.println(F("Error: Unknown Report ID"));
   }
@@ -441,6 +445,23 @@ void printMouseReport(HID_report_t* report)
   if (report->reportLength >= 8)
   {
     sprintf(strBuf,", Pan Delta: %3d",report->mouse.panDelta);
+    Serial.print(strBuf);
+  }
+  Serial.println();
+}
+
+/** Prints the information stored in a keyboard report to serial */
+void printKeyboardReport(HID_report_t* report)
+{
+  char strBuf[50];
+  sprintf(strBuf,"ReportID: 0x%02X",report->reportID);
+  Serial.print(strBuf);
+  sprintf(strBuf,", Modifiers: 0x%02X",report->keyboard.modifier1);
+  Serial.print(strBuf);
+  Serial.print(F(", Keycodes:"));
+  for (uint8_t i = 0; i < 6; i++)
+  {
+    sprintf(strBuf," %02X",report->keyboard.keycode[i]);
     Serial.print(strBuf);
   }
   Serial.println();

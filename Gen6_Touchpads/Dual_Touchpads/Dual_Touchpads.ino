@@ -625,6 +625,9 @@ void printDataReport(uint8_t i2c_channel, HID_report_t * report)
     case PTP_REPORT_ID:
         printPtpReport(i2c_channel, report);
         break;
+    case KEY_REPORT_ID:
+        printKeyboardReport(i2c_channel, report);
+        break;
     default:
         Serial.println(F("Error: Unknown Report ID"));
   }
@@ -676,6 +679,25 @@ void printMouseReport(uint8_t i2c_channel, HID_report_t* report)
   if (report->reportLength >= 8)
   {
     sprintf(strBuf,", Pan Delta: %3d",report->mouse.panDelta);
+    Serial.print(strBuf);
+  }
+  Serial.println();
+}
+
+/** Prints the information stored in a keyboard report to serial */
+void printKeyboardReport(uint8_t i2c_channel, HID_report_t* report)
+{
+  char strBuf[50];
+  sprintf(strBuf,"I2C_Chan %d -> ",i2c_channel);
+  Serial.print(strBuf);
+  sprintf(strBuf,"ReportID: 0x%02X",report->reportID);
+  Serial.print(strBuf);
+  sprintf(strBuf,", Modifiers: 0x%02X",report->keyboard.modifier1);
+  Serial.print(strBuf);
+  Serial.print(F(", Keycodes:"));
+  for (uint8_t i = 0; i < 6; i++)
+  {
+    sprintf(strBuf," %02X",report->keyboard.keycode[i]);
     Serial.print(strBuf);
   }
   Serial.println();

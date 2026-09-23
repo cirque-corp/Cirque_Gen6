@@ -12,6 +12,10 @@
 #include "I2C.h"
 #include <string.h>
 
+#if !defined(MOUSE_INTERFACE) || !defined(KEYBOARD_INTERFACE)
+#error "Select Tools > USB Type > 'Serial + Keyboard + Mouse + Joystick' - the Mouse/Keyboard objects used by this sketch are only declared for that USB Type."
+#endif
+
 #define USE_DR_I2C 0 // Reads out if data is ready through I2C instead of the interrupt pin
 
 bool dataPrint_mode_g = true;  /** < toggle for printing out data > */
@@ -21,6 +25,7 @@ bool decodeDebug_mode_g = true; /** < toggle for detailed decode failure diagnos
 uint32_t decodeFailCount_g[2] = {0, 0};
 
 void printDecodeFailureDebug(uint8_t i2c_channel, const uint8_t* packet, uint8_t dr_status);
+void performKeyboardReport(HID_report_t* report);
 
 bool button1Pressed, prevButton1Pressed;
 bool button2Pressed, prevButton2Pressed;
@@ -137,7 +142,7 @@ void loop()
       
       if (MOUSE_REPORT_ID == report.reportID)
       {
-        Mouse.move(report.mouse.xDelta, report.mouse.yDelta);
+        Mouse.move(report.mouse.xDelta, report.mouse.yDelta, report.mouse.scrollDelta, report.mouse.panDelta);
 
         if(report.mouse.buttons & 0x01)
         {
@@ -182,6 +187,10 @@ void loop()
             button1Pressed = false;
           }
         }
+      }
+      else if (KEY_REPORT_ID == report.reportID)
+      {
+        performKeyboardReport(&report);
       }
 
       if (!prevButton1Pressed && !prevButton2Pressed && button1Pressed)
@@ -237,7 +246,7 @@ void loop()
       
       if (MOUSE_REPORT_ID == report.reportID)
       {
-        Mouse.move(report.mouse.xDelta, report.mouse.yDelta);
+        Mouse.move(report.mouse.xDelta, report.mouse.yDelta, report.mouse.scrollDelta, report.mouse.panDelta);
 
         if(report.mouse.buttons & 0x01)
         {
@@ -282,6 +291,10 @@ void loop()
             button2Pressed = false;
           }
         }
+      }
+      else if (KEY_REPORT_ID == report.reportID)
+      {
+        performKeyboardReport(&report);
       }
 
       if (!prevButton2Pressed && !prevButton1Pressed && button2Pressed)
@@ -747,6 +760,9 @@ void printDataReport(uint8_t i2c_channel, HID_report_t * report)
     case PTP_REPORT_ID:
         printPtpReport(i2c_channel, report);
         break;
+    case KEY_REPORT_ID:
+        printKeyboardReport(i2c_channel, report);
+        break;
     default:
         Serial.println(F("Error: Unknown Report ID"));
   }
@@ -775,6 +791,39 @@ void printMouseReport(uint8_t i2c_channel, HID_report_t* report)
     Serial.print(strBuf);
   }
   Serial.println();
+}
+
+/** Prints the information stored in a keyboard report to serial */
+void printKeyboardReport(uint8_t i2c_channel, HID_report_t* report)
+{
+  char strBuf[50];
+  sprintf(strBuf,"I2C_Chan %d -> ",i2c_channel);
+  Serial.print(strBuf);
+  sprintf(strBuf,"ReportID: 0x%02X",report->reportID);
+  Serial.print(strBuf);
+  sprintf(strBuf,", Modifiers: 0x%02X",report->keyboard.modifier1);
+  Serial.print(strBuf);
+  Serial.print(F(", Keycodes:"));
+  for (uint8_t i = 0; i < 6; i++)
+  {
+    sprintf(strBuf," %02X",report->keyboard.keycode[i]);
+    Serial.print(strBuf);
+  }
+  Serial.println();
+}
+
+/** Drives the USB HID keyboard interface using the raw boot-keyboard fields
+    (modifier byte + up to 6 keycodes) decoded from a keyboard report. */
+void performKeyboardReport(HID_report_t* report)
+{
+  Keyboard.set_modifier(report->keyboard.modifier1);
+  Keyboard.set_key1(report->keyboard.keycode[0]);
+  Keyboard.set_key2(report->keyboard.keycode[1]);
+  Keyboard.set_key3(report->keyboard.keycode[2]);
+  Keyboard.set_key4(report->keyboard.keycode[3]);
+  Keyboard.set_key5(report->keyboard.keycode[4]);
+  Keyboard.set_key6(report->keyboard.keycode[5]);
+  Keyboard.send_now();
 }
 
 void printPtpReport(uint8_t i2c_channel, HID_report_t * report)
