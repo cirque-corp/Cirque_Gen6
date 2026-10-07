@@ -11,7 +11,8 @@ This code requires the Teensy 4.0 have its USB set to "Serial".
 Using the terminal window of the Arduino IDE you can send commands that control the touchpad.
 
 * Commands
-*   m - issue PTP reports, M - issue Mouse reports
+*   m or M - issue Mouse (relative) reports
+*   a or A - issue PTP (absolute) reports
 *   p - HID power off, P - HID power on
 *   r - don't report contacts, R - report contacts
 *   b - don't report buttons, B - report buttons

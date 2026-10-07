@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 #define MAX_CRQ_ALPS_FINGER_COUNT 5
-#define MAX_PTP_FINGER_COUNT 3
+#define MAX_PTP_FINGER_COUNT 5
 
 #define INCLUDE_UNCOMMON_REPORTS
 

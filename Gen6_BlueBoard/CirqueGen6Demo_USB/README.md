@@ -43,8 +43,8 @@ If the wrong USB type is selected, you'll get a compilation error with a helpful
 ## Serial Commands
 
 - **h, ?** - Print help
-- **m** - PTP mode (absolute coordinates)
-- **M** - Mouse mode (relative coordinates)
+- **m** or **M** - Mouse mode (relative coordinates)
+- **a** or **A** - PTP mode (absolute coordinates)
 - **d/D** - Data printing toggle
 - **r/R** - Contact reporting toggle
 - **b/B** - Button reporting toggle

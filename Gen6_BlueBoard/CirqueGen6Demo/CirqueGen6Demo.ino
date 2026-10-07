@@ -32,7 +32,11 @@ HidReport hidReport;
 #define TOTAL_FINGERS 5
 PtpFingerData_t fingerData[TOTAL_FINGERS]; // holds the PTP report data, organized by Finger ID (0..4)
 bool fingerDataReady[TOTAL_FINGERS];  // a flag that helps track the data as it's being organized
-bool readingTwoReports = false;  // typically, all the finger data can span 2 PTP reports, this variable helps track that state
+bool pendingPtpFrame = false;
+uint16_t pendingPtpTimestamp = 0;
+uint8_t pendingPtpContactCount = 0;
+uint8_t pendingPtpButtons = 0;
+uint8_t pendingPtpPacketCount = 0;
 
 // Keyboard state tracking
 keyReport_t prevKeyboardReport = {0, 0, {0, 0, 0, 0, 0, 0}}; // Track previous keyboard state for events
@@ -53,6 +57,14 @@ void setup() {
   delay(30);
   // put your setup code here, to run once:
   Serial.begin(115200);
+  elapsedMillis serialConnectTimer = 0;
+  while ((!Serial) && (serialConnectTimer < 1500))
+  {
+    // Give the host a short window to open Serial Monitor after flashing.
+  }
+
+  Serial.println(F("\n=== Boot: Cirque Gen6 Demo ==="));
+  Serial.println(F("Init stage: HostBus init"));
 
   // Initialize the HostBus layer
   HostBusLayer::initError err = HostBus.init(400000, 550); // 400,000 Hz, 550 byte buffer
@@ -60,15 +72,27 @@ void setup() {
   {
     Serial.print(F("Failed to init host bus: "));
     Serial.print((int)err);
+    Serial.println();
   }
 
   // The demo board has a power switch, turn it on
+  Serial.println(F("Init stage: Power on"));
   turnOnPower();
+
   // wait for the device to fully power on and report it is ready
-  waitForHidResetResponse();
-  // device will now be ready to operate
-  identifyDevice();
-  readDefaults();
+  Serial.println(F("Init stage: Wait for HID reset response"));
+  bool resetOkay = waitForHidResetResponse();
+  if (resetOkay)
+  {
+    // device will now be ready to operate
+    Serial.println(F("Init stage: Identify device"));
+    identifyDevice();
+    readDefaults();
+  }
+  else
+  {
+    Serial.println(F("Proceeding without HID descriptor read. You can retry with warm boot command 'w'."));
+  }
 
   // prepare the PTP report tracking data
   for (int x = 0; x < TOTAL_FINGERS; x++)
@@ -83,7 +107,7 @@ void setup() {
   }
 
   Serial.println(F("\nCirque Gen6 Demo"));
-  Serial.println(F("'h' or '?' - help"));
+  showHelp();
 }
 
 void loop() {
@@ -114,13 +138,15 @@ void processKeys(void)
       case '?':
         showHelp();
         break;
-      case 'm':
-        Serial.println(F("Changed to PTP reporting..."));
-        cirqueHid.setInputMode(true);
-        break;
       case 'M':
-        Serial.println(F("Changed to Mouse reporting..."));
+      case 'm':
+        Serial.println(F("Changed to Mouse (relative) reporting..."));
         cirqueHid.setInputMode(false);
+        break;
+      case 'A':
+      case 'a':
+        Serial.println(F("Changed to PTP (absolute) reporting..."));
+        cirqueHid.setInputMode(true);
         break;
       case 'p':
         Serial.println(F("Hid Set Power off..."));
@@ -244,8 +270,8 @@ void showHelp(void)
   Serial.println(F("Available Commands (case sensitive)"));
   Serial.println(F(""));
   Serial.println(F("--- Report Modes ---"));
-  Serial.println(F("  m - issue PTP reports"));
-  Serial.println(F("  M - issue Mouse reports"));
+  Serial.println(F("  m, M - issue Mouse (relative) reports"));
+  Serial.println(F("  a, A - issue PTP (absolute) reports"));
   Serial.println(F(""));
   Serial.println(F("--- Power Control ---"));
   Serial.println(F("  p - HID power off"));
@@ -310,12 +336,19 @@ void turnOnPower(void)
   }
 }
 
-void waitForHidResetResponse(void)
+bool waitForHidResetResponse(void)
 {
   Serial.print(F("Waiting for reset response..."));
   elapsedMillis timer = 0;
+  elapsedMillis totalWait = 0;
   while (!HostBus.drAsserted())
   {
+    if (totalWait > 5000)
+    {
+      Serial.println(F(" timeout"));
+      return false;
+    }
+
     if (timer > 250)
     {
       // every 250 msec print a "."
@@ -328,10 +361,12 @@ void waitForHidResetResponse(void)
   if (hidReport.length == 0)
   {
     Serial.println(F("Received HID Reset Response"));
+    return true;
   }
   else
   {
     Serial.println(F("Received something else, not the expected HID Reset Response"));
+    return false;
   }
 }
 
@@ -351,42 +386,126 @@ void identifyDevice(void)
   // hidDescriptor.BCD
 }
 
+void clearPendingPtpFrame(void)
+{
+  for (int x = 0; x < TOTAL_FINGERS; x++)
+  {
+    fingerData[x].contactID = x;
+    fingerData[x].confidence = 0;
+    fingerData[x].tip = 0;
+    fingerData[x].x = 0;
+    fingerData[x].y = 0;
+    fingerDataReady[x] = false;
+  }
+}
+
+uint8_t countActivePendingContacts(void)
+{
+  uint8_t activeContacts = 0;
+  for (int x = 0; x < TOTAL_FINGERS; x++)
+  {
+    if (fingerDataReady[x])
+    {
+      activeContacts++;
+    }
+  }
+  return activeContacts;
+}
+
+void printPendingPtpFrame(void)
+{
+  uint8_t activeContacts = 0;
+
+  Serial.printf("PTP Report Timestamp: %u  Contact Count: %u  Buttons: 0x%02X\r\n",
+    pendingPtpTimestamp, pendingPtpContactCount, pendingPtpButtons);
+
+  for (int x = 0; x < TOTAL_FINGERS; x++)
+  {
+    if (fingerDataReady[x] && (pendingPtpContactCount > 0))
+    {
+      Serial.printf("Contact %u  X: %4u  Y: %4u  Confidence: %u  Tip: %u\r\n",
+        fingerData[x].contactID, fingerData[x].x, fingerData[x].y, fingerData[x].confidence, fingerData[x].tip);
+      activeContacts++;
+    }
+  }
+
+  if (activeContacts == 0)
+  {
+    Serial.println(F("No active contacts"));
+  }
+
+  Serial.println();
+  clearPendingPtpFrame();
+}
+
 void printHidReport(HidReport & report)
 {
   switch (report.reportId)
   {
     case id_ptpReport :
-      if (report.report.ptp.numberFingers > MAX_PTP_FINGER_COUNT)
+    {
+      if ((!pendingPtpFrame) || (report.report.ptp.timeStamp != pendingPtpTimestamp))
       {
-        // it will take reading two reports to get all the data
-        readingTwoReports = true;
-      }
-      else if (readingTwoReports)
-      {
-        readingTwoReports = false;
-      }
-      
-      // IMPORTANT: Clear all finger data at the start of each PTP report
-      // This ensures inactive fingers don't persist with stale coordinates
-      if (!readingTwoReports)
-      {
-        for (int x = 0; x < TOTAL_FINGERS; x++)
+        if (pendingPtpFrame)
         {
-          fingerData[x].contactID = x;
-          fingerData[x].confidence = 0;
-          fingerData[x].tip = 0;
-          fingerData[x].x = 0;
-          fingerData[x].y = 0;
+          // Flush any incomplete frame before starting a new timestamp.
+          printPendingPtpFrame();
         }
+
+        clearPendingPtpFrame();
+        pendingPtpFrame = true;
+        pendingPtpTimestamp = report.report.ptp.timeStamp;
+        pendingPtpContactCount = report.report.ptp.contactCount;
+        pendingPtpButtons = report.report.ptp.buttons;
+        pendingPtpPacketCount = 1;
       }
-      
+      else
+      {
+        pendingPtpPacketCount++;
+        if (report.report.ptp.contactCount > pendingPtpContactCount)
+        {
+          pendingPtpContactCount = report.report.ptp.contactCount;
+        }
+        pendingPtpButtons |= report.report.ptp.buttons;
+      }
+
       // organize data - populate only fingers present in this report
-      for (int x = 0; x < MAX_PTP_FINGER_COUNT; x++)
+      for (int x = 0; x < report.report.ptp.numberFingers; x++)
       {
         PtpFingerData_t * finger = &report.report.ptp.fingers[x];
-        int index = finger->contactID;
-        if ((index < TOTAL_FINGERS) && (!fingerDataReady[index]))
+        bool hasContactData = (finger->confidence != 0) || (finger->tip != 0) || (finger->x != 0) || (finger->y != 0);
+        if (!hasContactData)
         {
+          continue;
+        }
+
+        int index = -1;
+
+        // Keep updates for the same contact in the same slot, even if contact IDs are not 0..4.
+        for (int y = 0; y < TOTAL_FINGERS; y++)
+        {
+          if (fingerDataReady[y] && (fingerData[y].contactID == finger->contactID))
+          {
+            index = y;
+            break;
+          }
+        }
+
+        if (index < 0)
+        {
+          for (int y = 0; y < TOTAL_FINGERS; y++)
+          {
+            if (!fingerDataReady[y])
+            {
+              index = y;
+              break;
+            }
+          }
+        }
+
+        if (index >= 0)
+        {
+          fingerData[index].contactID = finger->contactID;
           fingerData[index].confidence = finger->confidence;
           fingerData[index].tip = finger->tip;
           fingerData[index].x = finger->x;
@@ -395,20 +514,30 @@ void printHidReport(HidReport & report)
           fingerDataReady[index] = true;
         }
       }
-      if (!readingTwoReports)
-      {
-        // display data
-        Serial.printf("PTP  T: %d  C: %d  B: %d  ", report.report.ptp.timeStamp, report.report.ptp.contactCount, report.report.ptp.buttons);
-        for (int x = 0; x < TOTAL_FINGERS; x++)
-        {
-          Serial.printf("F%d  X:%4d  Y:%4d  Conf: %d  Tip: %d  ", 
-            fingerData[x].contactID, fingerData[x].x, fingerData[x].y, 
-            fingerData[x].confidence, fingerData[x].tip);
 
-          fingerDataReady[x] = false;
-        }
-        Serial.println();
+      uint8_t activeContacts = countActivePendingContacts();
+      bool frameComplete = false;
+
+      if ((pendingPtpContactCount > 0) && (activeContacts >= pendingPtpContactCount))
+      {
+        frameComplete = true;
       }
+      else if ((report.report.ptp.contactCount == 0) && (pendingPtpPacketCount > 1))
+      {
+        // Some continuation packets report Contact Count as 0.
+        frameComplete = true;
+      }
+
+      if (frameComplete)
+      {
+        printPendingPtpFrame();
+        pendingPtpFrame = false;
+        pendingPtpTimestamp = 0;
+        pendingPtpContactCount = 0;
+        pendingPtpButtons = 0;
+        pendingPtpPacketCount = 0;
+      }
+    }
     break;
     case id_mouseReport :
       Serial.printf("Mouse  dX : %4d  dY: %4d  Btn : %2d  dS : %4d  dP : %4d\n", 
