@@ -30,6 +30,23 @@ uint32_t decodeFailCount_g[2] = {0, 0};
 
 void printDecodeFailureDebug(uint8_t i2c_channel, const uint8_t* packet, uint8_t dr_status);
 
+typedef struct
+{
+  bool pending;
+  uint16_t timeStamp;
+  uint8_t contactCount;
+  uint8_t buttons;
+  uint8_t packetCount;
+  uint8_t maxSlotsPerPacket;
+  PtpContact_t contacts[PTP_MAX_CONTACTS];
+  bool contactReady[PTP_MAX_CONTACTS];
+} PtpPrintFrame_t;
+
+static PtpPrintFrame_t ptpPrintFrame_g[2];
+static void clearPtpPrintFrame(PtpPrintFrame_t *frame);
+static uint8_t countActivePtpContacts(const PtpPrintFrame_t *frame);
+static void printAndClearPtpFrame(uint8_t i2c_channel, PtpPrintFrame_t *frame);
+
 void setup()
 {
   Serial.begin(115200);
@@ -812,69 +829,179 @@ void printKeyboardReport(uint8_t i2c_channel, HID_report_t* report)
   Serial.println();
 }
 
-void printPtpReport(uint8_t i2c_channel, HID_report_t * report)
+static void clearPtpPrintFrame(PtpPrintFrame_t *frame)
+{
+  frame->pending = false;
+  frame->timeStamp = 0;
+  frame->contactCount = 0;
+  frame->buttons = 0;
+  frame->packetCount = 0;
+  frame->maxSlotsPerPacket = 0;
+  for (uint8_t i = 0; i < PTP_MAX_CONTACTS; i++)
+  {
+    frame->contacts[i].contactID = i;
+    frame->contacts[i].confidence = 0;
+    frame->contacts[i].tip = 0;
+    frame->contacts[i].x = 0;
+    frame->contacts[i].y = 0;
+    frame->contactReady[i] = false;
+  }
+}
+
+static uint8_t countActivePtpContacts(const PtpPrintFrame_t *frame)
+{
+  uint8_t activeContacts = 0;
+  for (uint8_t i = 0; i < PTP_MAX_CONTACTS; i++)
+  {
+    if (frame->contactReady[i] && frame->contacts[i].tip)
+    {
+      activeContacts++;
+    }
+  }
+  return activeContacts;
+}
+
+static void printAndClearPtpFrame(uint8_t i2c_channel, PtpPrintFrame_t *frame)
 {
   char strBuf[50];
-  uint8_t i;
-  uint8_t buttons = mapButtonsForChannel(i2c_channel, report->ptp.buttons);
   bool printedAnyContact = false;
-  bool multiContact = (report->ptp.contactCount > 1 || report->ptp.decodedContactSlots > 1);
+  uint8_t buttons = mapButtonsForChannel(i2c_channel, frame->buttons);
 
-  sprintf(strBuf,"I2C_Chan %d -> ",i2c_channel);
+  sprintf(strBuf, "I2C_Chan %d -> ", i2c_channel);
   Serial.print(strBuf);
-  sprintf(strBuf,"ReportID: 0x%02X",report->reportID);
+  sprintf(strBuf, "ReportID: 0x%02X", PTP_REPORT_ID);
   Serial.print(strBuf);
-  // Serial.print(report->reportID, HEX);
-  sprintf(strBuf,", Time: %5d",report->ptp.timeStamp);
+  sprintf(strBuf, ", Time: %5d", frame->timeStamp);
   Serial.print(strBuf);
-  if(!multiContact)
-  {
-    sprintf(strBuf,", ContactID: %d",report->ptp.contactID);
-    Serial.print(strBuf);
-    sprintf(strBuf,", Confidence: %d",report->ptp.confidence); 
-    Serial.print(strBuf);
-    sprintf(strBuf,", Tip: %d",report->ptp.tip);
-    Serial.print(strBuf);
-    sprintf(strBuf,", X: %4d",report->ptp.x);
-    Serial.print(strBuf);
-    sprintf(strBuf,", Y: %4d",report->ptp.y);
-    Serial.print(strBuf);
-  }
-  sprintf(strBuf,", Buttons: %d",buttons);
+  sprintf(strBuf, ", Buttons: %d", buttons);
   Serial.print(strBuf);
-  sprintf(strBuf,", Contact Count: %d",report->ptp.contactCount); //Total number of contacts to be reported in a given report
+  sprintf(strBuf, ", Contact Count: %d", frame->contactCount);
   Serial.print(strBuf);
   Serial.println();
 
-  if(multiContact)
+  for (uint8_t i = 0; i < PTP_MAX_CONTACTS; i++)
   {
-    for(i = 0; i < report->ptp.decodedContactSlots; i++)
+    if (frame->contactReady[i] && frame->contacts[i].tip)
     {
-      if(report->ptp.contacts[i].tip)
+      printedAnyContact = true;
+      sprintf(strBuf, "  Contact[%d]", i);
+      Serial.print(strBuf);
+      sprintf(strBuf, ": ID=%d", frame->contacts[i].contactID);
+      Serial.print(strBuf);
+      sprintf(strBuf, ", Tip=%d", frame->contacts[i].tip);
+      Serial.print(strBuf);
+      sprintf(strBuf, ", Confidence=%d", frame->contacts[i].confidence);
+      Serial.print(strBuf);
+      sprintf(strBuf, ", X=%4d", frame->contacts[i].x);
+      Serial.print(strBuf);
+      sprintf(strBuf, ", Y=%4d", frame->contacts[i].y);
+      Serial.print(strBuf);
+      Serial.println();
+    }
+  }
+
+  if (!printedAnyContact)
+  {
+    Serial.println(F("  No active contacts in frame"));
+  }
+
+  clearPtpPrintFrame(frame);
+}
+
+void printPtpReport(uint8_t i2c_channel, HID_report_t * report)
+{
+  if (i2c_channel > 1)
+  {
+    return;
+  }
+
+  PtpPrintFrame_t *frame = &ptpPrintFrame_g[i2c_channel];
+  if (!frame->pending)
+  {
+    clearPtpPrintFrame(frame);
+    frame->pending = true;
+    frame->timeStamp = report->ptp.timeStamp;
+  }
+  else if (report->ptp.timeStamp != frame->timeStamp)
+  {
+    printAndClearPtpFrame(i2c_channel, frame);
+    frame->pending = true;
+    frame->timeStamp = report->ptp.timeStamp;
+  }
+
+  frame->packetCount++;
+  frame->buttons |= report->ptp.buttons;
+  if (report->ptp.contactCount > frame->contactCount)
+  {
+    frame->contactCount = report->ptp.contactCount;
+  }
+  if (report->ptp.decodedContactSlots > frame->maxSlotsPerPacket)
+  {
+    frame->maxSlotsPerPacket = report->ptp.decodedContactSlots;
+  }
+
+  for (uint8_t i = 0; i < report->ptp.decodedContactSlots; i++)
+  {
+    PtpContact_t *contact = &report->ptp.contacts[i];
+    bool hasContactData = (contact->confidence != 0) || (contact->tip != 0) || (contact->x != 0) || (contact->y != 0);
+    if (!hasContactData)
+    {
+      continue;
+    }
+
+    int8_t index = -1;
+    for (uint8_t slot = 0; slot < PTP_MAX_CONTACTS; slot++)
+    {
+      if (frame->contactReady[slot] && (frame->contacts[slot].contactID == contact->contactID))
       {
-        printedAnyContact = true;
-        sprintf(strBuf, "  Contact[%d]", i);
-        Serial.print(strBuf);
-        sprintf(strBuf, ": ID=%d", report->ptp.contacts[i].contactID);
-        Serial.print(strBuf);
-        sprintf(strBuf, ", Tip=%d", report->ptp.contacts[i].tip);
-        Serial.print(strBuf);
-        sprintf(strBuf, ", Confidence=%d", report->ptp.contacts[i].confidence);
-        Serial.print(strBuf);
-        sprintf(strBuf, ", X=%4d", report->ptp.contacts[i].x);
-        Serial.print(strBuf);
-        sprintf(strBuf, ", Y=%4d", report->ptp.contacts[i].y);
-        Serial.print(strBuf);
-        Serial.println();
+        index = (int8_t)slot;
+        break;
       }
     }
 
-    if(!printedAnyContact)
+    if (index < 0)
     {
-      Serial.println(F("  No active contact slots in payload"));
+      for (uint8_t slot = 0; slot < PTP_MAX_CONTACTS; slot++)
+      {
+        if (!frame->contactReady[slot])
+        {
+          index = (int8_t)slot;
+          break;
+        }
+      }
+    }
+
+    if (index >= 0)
+    {
+      frame->contacts[index] = *contact;
+      frame->contactReady[index] = true;
     }
   }
-   
+
+  uint8_t activeContacts = countActivePtpContacts(frame);
+  bool frameComplete = false;
+
+  if (frame->contactCount == 0)
+  {
+    frameComplete = true;
+  }
+  else if (activeContacts >= frame->contactCount)
+  {
+    frameComplete = true;
+  }
+  else if (frame->maxSlotsPerPacket > 0)
+  {
+    uint8_t expectedPackets = (frame->contactCount + frame->maxSlotsPerPacket - 1) / frame->maxSlotsPerPacket;
+    if ((expectedPackets > 1) && (frame->packetCount >= expectedPackets))
+    {
+      frameComplete = true;
+    }
+  }
+
+  if (frameComplete)
+  {
+    printAndClearPtpFrame(i2c_channel, frame);
+  }
 }
 
 /**************************************************************/

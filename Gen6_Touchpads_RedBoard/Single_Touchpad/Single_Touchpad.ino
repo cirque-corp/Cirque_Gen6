@@ -14,6 +14,23 @@ void printKeyboardReport(HID_report_t * report);
 void printRawHidPacket(const uint8_t* packet, uint16_t packetLength);
 void printDecodeFailureDebug(const uint8_t* packet, uint8_t dr_status);
 
+typedef struct
+{
+  bool pending;
+  uint16_t timeStamp;
+  uint8_t contactCount;
+  uint8_t buttons;
+  uint8_t packetCount;
+  uint8_t maxSlotsPerPacket;
+  PtpContact_t contacts[PTP_MAX_CONTACTS];
+  bool contactReady[PTP_MAX_CONTACTS];
+} PtpPrintFrame_t;
+
+static PtpPrintFrame_t ptpPrintFrame_g;
+static void clearPtpPrintFrame(PtpPrintFrame_t *frame);
+static uint8_t countActivePtpContacts(const PtpPrintFrame_t *frame);
+static void printAndClearPtpFrame(PtpPrintFrame_t *frame);
+
 bool dataPrint_mode_g = true;  /** < toggle for printing out data > */
 bool eventPrint_mode_g = true; /** < toggle for printing off events */
 bool rawDump_mode_g = false;   /** < toggle for printing raw HID packet bytes > */
@@ -117,18 +134,6 @@ void processSerialCommand(char rxChar)
     case 'c':
         Serial.println(F("Compensation Forced"));
         API_C3_forceComp();
-        break;
-        
-    case 'C':
-        Serial.println(F("Factory Calibrate... "));
-        if(API_C3_factoryCalibrate())
-        {
-            Serial.println(F("Done"));
-        }
-        else
-        {
-            Serial.println(F("Failed")); //Hardware timeout (Did the module disconnect?) 
-        }
         break;
         
     case 'f':
@@ -266,7 +271,6 @@ void printHelpTable()
   Serial.println(F("Available Commands (case sensitive)"));
   Serial.println(F(""));
   //Serial.println(F("c\t-\tForce Compensation"));
-  //Serial.println(F("C\t-\tFactory Calibrate"));
   Serial.println(F("f\t-\tEnable Feed (default)"));
   Serial.println(F("F\t-\tDisable Feed"));
   Serial.println(F("a, p\t-\tSet to PTP Mode"));
@@ -575,65 +579,170 @@ void printKeycodeName(uint8_t keycode)
   }
 }
 
-/** Prints the information stored in a PTP report to serial */
-void printPtpReport(HID_report_t* report)
+static void clearPtpPrintFrame(PtpPrintFrame_t *frame)
+{
+  frame->pending = false;
+  frame->timeStamp = 0;
+  frame->contactCount = 0;
+  frame->buttons = 0;
+  frame->packetCount = 0;
+  frame->maxSlotsPerPacket = 0;
+  for (uint8_t i = 0; i < PTP_MAX_CONTACTS; i++)
+  {
+    frame->contacts[i].contactID = i;
+    frame->contacts[i].confidence = 0;
+    frame->contacts[i].tip = 0;
+    frame->contacts[i].x = 0;
+    frame->contacts[i].y = 0;
+    frame->contactReady[i] = false;
+  }
+}
+
+static uint8_t countActivePtpContacts(const PtpPrintFrame_t *frame)
+{
+  uint8_t activeContacts = 0;
+  for (uint8_t i = 0; i < PTP_MAX_CONTACTS; i++)
+  {
+    if (frame->contactReady[i] && frame->contacts[i].tip)
+    {
+      activeContacts++;
+    }
+  }
+  return activeContacts;
+}
+
+static void printAndClearPtpFrame(PtpPrintFrame_t *frame)
 {
   char strBuf[50];
-  uint8_t i;
   bool printedAnyContact = false;
-  bool multiContact = (report->ptp.contactCount > 1 || report->ptp.decodedContactSlots > 1);
 
-  sprintf(strBuf,"ReportID: 0x%02X",report->reportID);
+  sprintf(strBuf, "ReportID: 0x%02X", PTP_REPORT_ID);
   Serial.print(strBuf);
-  // Serial.print(report->reportID, HEX);
-  sprintf(strBuf,", Time: %5d",report->ptp.timeStamp);
+  sprintf(strBuf, ", Time: %5d", frame->timeStamp);
   Serial.print(strBuf);
-  if(!multiContact)
-  {
-    sprintf(strBuf,", ContactID: %d",report->ptp.contactID);
-    Serial.print(strBuf);
-    sprintf(strBuf,", Confidence: %d",report->ptp.confidence); 
-    Serial.print(strBuf);
-    sprintf(strBuf,", Tip: %d",report->ptp.tip);
-    Serial.print(strBuf);
-    sprintf(strBuf,", X: %4d",report->ptp.x);
-    Serial.print(strBuf);
-    sprintf(strBuf,", Y: %4d",report->ptp.y);
-    Serial.print(strBuf);
-  }
-  sprintf(strBuf,", Buttons: %d",report->ptp.buttons);
+  sprintf(strBuf, ", Buttons: %d", frame->buttons);
   Serial.print(strBuf);
-  sprintf(strBuf,", Contact Count: %d",report->ptp.contactCount); //Total number of contacts to be reported in a given report
+  sprintf(strBuf, ", Contact Count: %d", frame->contactCount);
   Serial.print(strBuf);
   Serial.println();
 
-  if(multiContact)
+  for (uint8_t i = 0; i < PTP_MAX_CONTACTS; i++)
   {
-    for(i = 0; i < report->ptp.decodedContactSlots; i++)
+    if (frame->contactReady[i] && frame->contacts[i].tip)
     {
-      if(report->ptp.contacts[i].tip)
+      printedAnyContact = true;
+      sprintf(strBuf, "  Contact[%d]", i);
+      Serial.print(strBuf);
+      sprintf(strBuf, ": ID=%d", frame->contacts[i].contactID);
+      Serial.print(strBuf);
+      sprintf(strBuf, ", Tip=%d", frame->contacts[i].tip);
+      Serial.print(strBuf);
+      sprintf(strBuf, ", Confidence=%d", frame->contacts[i].confidence);
+      Serial.print(strBuf);
+      sprintf(strBuf, ", X=%4d", frame->contacts[i].x);
+      Serial.print(strBuf);
+      sprintf(strBuf, ", Y=%4d", frame->contacts[i].y);
+      Serial.print(strBuf);
+      Serial.println();
+    }
+  }
+
+  if (!printedAnyContact)
+  {
+    Serial.println(F("  No active contacts in frame"));
+  }
+
+  clearPtpPrintFrame(frame);
+}
+
+/** Prints the information stored in a PTP report to serial */
+void printPtpReport(HID_report_t* report)
+{
+  if (!ptpPrintFrame_g.pending)
+  {
+    clearPtpPrintFrame(&ptpPrintFrame_g);
+    ptpPrintFrame_g.pending = true;
+    ptpPrintFrame_g.timeStamp = report->ptp.timeStamp;
+  }
+  else if (report->ptp.timeStamp != ptpPrintFrame_g.timeStamp)
+  {
+    printAndClearPtpFrame(&ptpPrintFrame_g);
+    ptpPrintFrame_g.pending = true;
+    ptpPrintFrame_g.timeStamp = report->ptp.timeStamp;
+  }
+
+  ptpPrintFrame_g.packetCount++;
+  ptpPrintFrame_g.buttons |= report->ptp.buttons;
+  if (report->ptp.contactCount > ptpPrintFrame_g.contactCount)
+  {
+    ptpPrintFrame_g.contactCount = report->ptp.contactCount;
+  }
+  if (report->ptp.decodedContactSlots > ptpPrintFrame_g.maxSlotsPerPacket)
+  {
+    ptpPrintFrame_g.maxSlotsPerPacket = report->ptp.decodedContactSlots;
+  }
+
+  for (uint8_t i = 0; i < report->ptp.decodedContactSlots; i++)
+  {
+    PtpContact_t *contact = &report->ptp.contacts[i];
+    bool hasContactData = (contact->confidence != 0) || (contact->tip != 0) || (contact->x != 0) || (contact->y != 0);
+    if (!hasContactData)
+    {
+      continue;
+    }
+
+    int8_t index = -1;
+    for (uint8_t slot = 0; slot < PTP_MAX_CONTACTS; slot++)
+    {
+      if (ptpPrintFrame_g.contactReady[slot] && (ptpPrintFrame_g.contacts[slot].contactID == contact->contactID))
       {
-        printedAnyContact = true;
-        sprintf(strBuf, "  Contact[%d]", i);
-        Serial.print(strBuf);
-        sprintf(strBuf, ": ID=%d", report->ptp.contacts[i].contactID);
-        Serial.print(strBuf);
-        sprintf(strBuf, ", Tip=%d", report->ptp.contacts[i].tip);
-        Serial.print(strBuf);
-        sprintf(strBuf, ", Confidence=%d", report->ptp.contacts[i].confidence);
-        Serial.print(strBuf);
-        sprintf(strBuf, ", X=%4d", report->ptp.contacts[i].x);
-        Serial.print(strBuf);
-        sprintf(strBuf, ", Y=%4d", report->ptp.contacts[i].y);
-        Serial.print(strBuf);
-        Serial.println();
+        index = (int8_t)slot;
+        break;
       }
     }
 
-    if(!printedAnyContact)
+    if (index < 0)
     {
-      Serial.println(F("  No active contact slots in payload"));
+      for (uint8_t slot = 0; slot < PTP_MAX_CONTACTS; slot++)
+      {
+        if (!ptpPrintFrame_g.contactReady[slot])
+        {
+          index = (int8_t)slot;
+          break;
+        }
+      }
     }
+
+    if (index >= 0)
+    {
+      ptpPrintFrame_g.contacts[index] = *contact;
+      ptpPrintFrame_g.contactReady[index] = true;
+    }
+  }
+
+  uint8_t activeContacts = countActivePtpContacts(&ptpPrintFrame_g);
+  bool frameComplete = false;
+
+  if (ptpPrintFrame_g.contactCount == 0)
+  {
+    frameComplete = true;
+  }
+  else if (activeContacts >= ptpPrintFrame_g.contactCount)
+  {
+    frameComplete = true;
+  }
+  else if (ptpPrintFrame_g.maxSlotsPerPacket > 0)
+  {
+    uint8_t expectedPackets = (ptpPrintFrame_g.contactCount + ptpPrintFrame_g.maxSlotsPerPacket - 1) / ptpPrintFrame_g.maxSlotsPerPacket;
+    if ((expectedPackets > 1) && (ptpPrintFrame_g.packetCount >= expectedPackets))
+    {
+      frameComplete = true;
+    }
+  }
+
+  if (frameComplete)
+  {
+    printAndClearPtpFrame(&ptpPrintFrame_g);
   }
 }
 

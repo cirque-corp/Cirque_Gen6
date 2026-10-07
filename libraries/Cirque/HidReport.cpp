@@ -133,14 +133,23 @@ bool HidReport::decodeMouseReport(uint8_t* packet)
 
 bool HidReport::decodePTPReport(uint8_t* packet)
 {
+    static constexpr uint16_t PTP_HEADER_BYTES = 3;
+    static constexpr uint16_t PTP_TRAILER_BYTES = 4;
+    static constexpr uint16_t PTP_FINGER_BYTES = 5;
+
     bool length_okay = false;
-    switch (m_length)
+    if (m_length >= (PTP_HEADER_BYTES + PTP_TRAILER_BYTES + PTP_FINGER_BYTES))
     {
-        case 3 + (5 * 1) + 4 : // one finger
-        case 3 + (5 * 2) + 4 : // two fingers
-        case 3 + (5 * 3) + 4 : // three fingers
-            report.ptp.numberFingers = (m_length - (3 + 4) ) / 5;
-            length_okay = true;
+        uint16_t fingerBytes = m_length - (PTP_HEADER_BYTES + PTP_TRAILER_BYTES);
+        if ((fingerBytes % PTP_FINGER_BYTES) == 0)
+        {
+            uint8_t fingerCount = (uint8_t)(fingerBytes / PTP_FINGER_BYTES);
+            if ((fingerCount >= 1) && (fingerCount <= MAX_PTP_FINGER_COUNT))
+            {
+                report.ptp.numberFingers = fingerCount;
+                length_okay = true;
+            }
+        }
     }
     if ((m_report_id != id_ptpReport) || (!length_okay))
     {
@@ -163,6 +172,16 @@ bool HidReport::decodePTPReport(uint8_t* packet)
 
         report.ptp.fingers[x].y = (uint16_t) packet[index++];   // low byte
         report.ptp.fingers[x].y |= (uint16_t) packet[index++] << 8;  // high byte
+    }
+
+    // Zero any remaining slots to avoid stale finger data between packets.
+    for (int x = report.ptp.numberFingers; x < MAX_PTP_FINGER_COUNT; x++)
+    {
+        report.ptp.fingers[x].confidence = 0;
+        report.ptp.fingers[x].tip = 0;
+        report.ptp.fingers[x].contactID = 0;
+        report.ptp.fingers[x].x = 0;
+        report.ptp.fingers[x].y = 0;
     }
 
     report.ptp.timeStamp = (uint16_t) packet[index++];  // low byte
