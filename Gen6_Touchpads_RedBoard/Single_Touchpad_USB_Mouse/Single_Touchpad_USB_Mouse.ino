@@ -13,7 +13,7 @@
 #include <string.h>
 
 #if !defined(MOUSE_INTERFACE) || !defined(KEYBOARD_INTERFACE)
-#error "Select Tools > USB Type > 'Serial + Keyboard + Mouse + Joystick' - the Mouse/Keyboard objects used by this sketch are only declared for that USB Type."
+#error "Within the Arduino IDE, please select Tools > USB Type > 'Serial + Keyboard + Mouse + Joystick' - the Mouse/Keyboard objects used by this sketch are only declared for that USB Type."
 #endif
 
 #define USE_DR_I2C 0 // Reads out if data is ready through I2C instead of the interrupt pin

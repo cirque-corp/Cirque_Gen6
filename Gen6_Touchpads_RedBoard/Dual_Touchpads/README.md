@@ -1,6 +1,6 @@
-# Gen 6 Circle Sensor Dev Kit
+# Gen6 Touchpad Dev Kit
 
-Copyright (c) 2025 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
+Copyright (c) 2026 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
 
 (Initial Release)
 
@@ -10,7 +10,7 @@ This directory contains a sample program that demonstrates the usage of Cirque's
 Gen6 touchpad solutions with a Teensy 4.0 development board acting as the host.
 
 This project is intended to run on the Cirque 02-000620-00 Rev A02 (or later) PCB, with a 
-Teensy 4.0 on-board.
+Teensy 4.0 on-board. The dev kit is also known as the red board or Circle Sensor Dev Kit.
 
 This project presents how to read and interpret data from the Gen6 touchpads. 
 This is presented via Serial Port (Use the Serial Monitor in the Arduino IDE).
@@ -18,7 +18,7 @@ You can also change various configuration and print settings by sending commands
 via Serial Port. Send 'h' for a full list of commands. 
 
 NOTE: The Arduino IDE requires projects to be located in a folder with a name 
-that matches that of the .ino file (in this case, Dual_Circle_Pads).
+that matches that of the .ino file (in this case, Dual_Touchpads).
 
 ### Key Command Options
 There is a simple command menu available upon entering the 'h' character into 

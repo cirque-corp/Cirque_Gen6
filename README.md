@@ -16,15 +16,15 @@ As you open each .ino, remember to set the Board and Port to the correct values.
 
 The code is arranged into these directories. 
 
-### Circular_Touchpad
+### Gen6_Touchpads_RedBoard
 
-This contains the projects that are used with the Glidepoint Development Kit, Red Board - 02-000620-00 Rev A02 or later.
+This contains the projects that are used with the Glidepoint Development Kit (sometimes known as the Circle Sensor Dev Kit), Red Board - 02-000620-00 Rev A02 or later.
 
 ### Gen6_BL_Demo
 
 This contains a project that shows how to use the bootloader to update the firmware in a Gen6 device, Blue Board - 02-000658-00 Rev E01 or later.
 
-### Gen6DevKit
+### Gen6_BL_Demo
 
 This contains the projects that are used with the GlidePoint Gen-6 Development Kit, Blue Board - 02-000658-00 Rev E01 or later.
 

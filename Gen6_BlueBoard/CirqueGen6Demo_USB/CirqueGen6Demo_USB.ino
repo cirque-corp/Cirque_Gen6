@@ -5,7 +5,7 @@
 // Based on CirqueGen6Demo with USB HID support added
 
 #if !defined(MOUSE_INTERFACE) || !defined(KEYBOARD_INTERFACE)
-#error "Please select 'Serial + Keyboard + Mouse + Joystick' or similar from Tools > USB Type menu to enable Mouse and Keyboard interfaces"
+#error "Within the Arduino IDE, please select 'Serial + Keyboard + Mouse + Joystick' or similar from Tools > USB Type menu to enable Mouse and Keyboard interfaces"
 #endif
 
 #include <i2c_device.h>
