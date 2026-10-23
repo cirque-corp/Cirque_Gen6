@@ -27,24 +27,21 @@ the serial monitor.
 Available Commands (case sensitive):
 (Replace '#' with I2C channel num [0,1])
 
-c#	-	Force Compensation
-C#	-	Factory Calibrate
 f#	-	Enable Feed (default)
 F#	-	Disable Feed
 p#, a#	-	Set to PTP Mode
 r#	-	Set to Relative Mode (default)
-S#	-	Save Settings to Flash
 s#	-	Print System Info
-t#	-	Enable Tracking (default)
-T#	-	Disable Tracking
-v#	-	Enable Compensation (default)
-V#	-	Disable Compensation
+b#	-	Enable Adaptive Touch
+B#	-	Disable Adaptive Touch
 
 h, H, ?	-	Print this Table
 d	-	Turn on Data Printing (default)
 D	-	Turn off Data Printing 
 e	-	Turn on Event Printing (default)
 E	-	Turn off Event Printing 
+z	-	Turn on decode failure diagnostics (default)
+Z	-	Turn off decode failure diagnostics
 ```
 
 ### Sample Output
@@ -67,11 +64,16 @@ Version ID:	1
 Setting PTP Mode...
 Done
 
-I2C_Chan 1 -> ReportID: 0x01, Time:  1885, ContactID: 0, Confidence: 1, Tip: 1, X:  920, Y: 1094, Buttons: 0, Contact Count: 1
-I2C_Chan 1 -> ReportID: 0x01, Time:  1950, ContactID: 0, Confidence: 1, Tip: 1, X:  929, Y: 1093, Buttons: 0, Contact Count: 1
-I2C_Chan 1 -> ReportID: 0x01, Time:  2015, ContactID: 0, Confidence: 1, Tip: 1, X:  943, Y: 1086, Buttons: 0, Contact Count: 1
-I2C_Chan 1 -> ReportID: 0x01, Time:  2080, ContactID: 0, Confidence: 1, Tip: 1, X:  952, Y: 1078, Buttons: 0, Contact Count: 1
-I2C_Chan 1 -> ReportID: 0x01, Time:  2145, ContactID: 0, Confidence: 1, Tip: 1, X:  953, Y: 1079, Buttons: 0, Contact Count: 1
+I2C_Chan 1 -> ReportID: 0x01, Time:  1885, Buttons: 0, Contact Count: 1
+  Contact[0]: ID=0, Tip=1, Confidence=1, X= 920, Y=1094
+I2C_Chan 1 -> ReportID: 0x01, Time:  1950, Buttons: 0, Contact Count: 1
+  Contact[0]: ID=0, Tip=1, Confidence=1, X= 929, Y=1093
+I2C_Chan 1 -> ReportID: 0x01, Time:  2015, Buttons: 0, Contact Count: 1
+  Contact[0]: ID=0, Tip=1, Confidence=1, X= 943, Y=1086
+I2C_Chan 1 -> ReportID: 0x01, Time:  2080, Buttons: 0, Contact Count: 1
+  Contact[0]: ID=0, Tip=1, Confidence=1, X= 952, Y=1078
+I2C_Chan 1 -> ReportID: 0x01, Time:  2145, Buttons: 0, Contact Count: 1
+  Contact[0]: ID=0, Tip=1, Confidence=1, X= 953, Y=1079
 
 Setting Relative Mode...
 Done

@@ -24,7 +24,7 @@ This contains the projects that are used with the Glidepoint Development Kit (so
 
 This contains a project that shows how to use the bootloader to update the firmware in a Gen6 device, Blue Board - 02-000658-00 Rev E01 or later.
 
-### Gen6_BL_Demo
+### Gen6_BlueBoard
 
 This contains the projects that are used with the GlidePoint Gen-6 Development Kit, Blue Board - 02-000658-00 Rev E01 or later.
 

@@ -48,6 +48,7 @@ If the wrong USB type is selected, you'll get a compilation error with a helpful
 - **d/D** - Data printing toggle
 - **r/R** - Contact reporting toggle
 - **b/B** - Button reporting toggle
+- **f/F** - Enable/Disable feed
 - **x/X** - Invert X axis toggle
 - **y/Y** - Invert Y axis toggle
 - **s/S** - Swap X/Y toggle
@@ -57,6 +58,7 @@ If the wrong USB type is selected, you'll get a compilation error with a helpful
 - **$** - Power cycle device
 - **g** - Get device capabilities
 - **o** - Show system information
+- **z** - Toggle raw packet hex dump
 
 ## USB Output Behavior
 
