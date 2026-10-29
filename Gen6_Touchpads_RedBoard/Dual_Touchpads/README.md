@@ -29,8 +29,8 @@ Available Commands (case sensitive):
 
 f#	-	Enable Feed (default)
 F#	-	Disable Feed
-p#, a#	-	Set to PTP Mode
-r#	-	Set to Relative Mode (default)
+p#, a#	-	Set to PTP/Absolute Mode
+r#, m#	-	Set to Mouse/Relative Mode (default)
 s#	-	Print System Info
 b#	-	Enable Adaptive Touch
 B#	-	Disable Adaptive Touch

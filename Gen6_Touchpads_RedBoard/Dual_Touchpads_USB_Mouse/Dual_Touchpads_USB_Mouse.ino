@@ -464,7 +464,7 @@ void processSerialCommand(char rxChar0, char rxChar1)
                     
       case 'p':
       case 'a':
-          Serial.println(F("Setting PTP Mode..."));
+          Serial.println(F("Setting PTP/Absolute Mode..."));
           if (API_C3_setPtpMode(i2c_channel))
           {
             Serial.println(F("Done"));
@@ -475,8 +475,9 @@ void processSerialCommand(char rxChar0, char rxChar1)
           }
           break;
           
+      case 'm':
       case 'r':
-          Serial.println(F("Setting Relative Mode..."));
+          Serial.println(F("Setting Mouse/Relative Mode..."));
           if (API_C3_setRelativeMode(i2c_channel))
           {
             Serial.println(F("Done"));
@@ -641,8 +642,8 @@ void printHelpTable()
   //Serial.println(F("C#\t-\tFactory Calibrate"));
   Serial.println(F("f#\t-\tEnable Feed (default)"));
   Serial.println(F("F#\t-\tDisable Feed"));
-  Serial.println(F("p#, a#\t-\tSet to PTP Mode"));
-  Serial.println(F("r#\t-\tSet to Relative Mode (default)"));
+  Serial.println(F("p#, a#\t-\tSet to PTP/Absolute Mode"));
+  Serial.println(F("r#, m#\t-\tSet to Mouse/Relative Mode (default)"));
   //Serial.println(F("S#\t-\tSave Settings to Flash"));
   Serial.println(F("s#\t-\tPrint System Info"));
   Serial.println(F("b#\t-\tEnable Adaptive Touch"));

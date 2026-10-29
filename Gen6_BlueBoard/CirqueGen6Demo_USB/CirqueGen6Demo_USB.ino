@@ -246,19 +246,20 @@ void processKeys(void)
         break;
       case 'M':
       case 'm':
-        Serial.println(F("Changed to Mouse (relative) reporting..."));
+        Serial.println(F("Changed to Mouse/Relative reporting..."));
         cirqueHid.setInputMode(false);
         break;
       case 'A':
       case 'a':
-        Serial.println(F("Changed to PTP (absolute) reporting..."));
+      case 'p':
+        Serial.println(F("Changed to PTP/Absolute reporting..."));
         cirqueHid.setInputMode(true);
         break;
-      case 'p':
+      case 'k':
         Serial.println(F("Hid Set Power off..."));
         cirqueHid.setPower(false);
         break;
-      case 'P':
+      case 'K':
         Serial.println(F("Hid Set Power on..."));
         cirqueHid.setPower(true);
         break;
@@ -379,12 +380,12 @@ void showHelp(void)
   Serial.println(F("Available Commands (case sensitive)"));
   Serial.println(F(""));
   Serial.println(F("--- Report Modes ---"));
-  Serial.println(F("  m, M - issue Mouse (relative) reports"));
-  Serial.println(F("  a, A - issue PTP (absolute) reports"));
+  Serial.println(F("  m, M - issue Mouse/Relative reports"));
+  Serial.println(F("  a, A, p - issue PTP/Absolute reports"));
   Serial.println(F(""));
   Serial.println(F("--- Power Control ---"));
-  Serial.println(F("  p - HID power off"));
-  Serial.println(F("  P - HID power on"));
+  Serial.println(F("  k - HID power off"));
+  Serial.println(F("  K - HID power on"));
   Serial.println(F("  w - warm boot (reset)"));
   Serial.println(F("  i - cancel force-sleep"));
   Serial.println(F("  I - force sleep"));

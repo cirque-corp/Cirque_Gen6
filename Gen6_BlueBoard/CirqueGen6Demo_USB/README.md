@@ -23,13 +23,13 @@ If the wrong USB type is selected, you'll get a compilation error with a helpful
 
 ## Firmware Modes
 
-### PTP Mode (Default)
+### PTP/Absolute Mode (Default)
 - Reports absolute X/Y coordinates
 - CirqueGen6Demo_USB converts these to relative mouse movement
 - Full multi-touch support with finger tracking
 - Best for touchpad-like behavior
 
-### Mouse Mode
+### Mouse/Relative Mode
 - Reports relative X/Y deltas
 - Direct USB mouse movement
 - Button support
@@ -43,8 +43,8 @@ If the wrong USB type is selected, you'll get a compilation error with a helpful
 ## Serial Commands
 
 - **h, ?** - Print help
-- **m** or **M** - Mouse mode (relative coordinates)
-- **a** or **A** - PTP mode (absolute coordinates)
+- **m** or **M** - Mouse/Relative mode
+- **a**, **A**, or **p** - PTP/Absolute mode
 - **d/D** - Data printing toggle
 - **r/R** - Contact reporting toggle
 - **b/B** - Button reporting toggle
@@ -52,7 +52,7 @@ If the wrong USB type is selected, you'll get a compilation error with a helpful
 - **x/X** - Invert X axis toggle
 - **y/Y** - Invert Y axis toggle
 - **s/S** - Swap X/Y toggle
-- **p/P** - Power off/on
+- **k/K** - Power off/on
 - **w** - Warm boot (device reset)
 - **i/I** - Cancel/Force sleep
 - **$** - Power cycle device
@@ -63,8 +63,8 @@ If the wrong USB type is selected, you'll get a compilation error with a helpful
 ## USB Output Behavior
 
 ### Mouse Reports
-- **Relative mode**: Moves cursor by delta X/Y
-- **PTP mode**: Converts absolute coordinates to relative movement
+- **Mouse/Relative mode**: Moves cursor by delta X/Y
+- **PTP/Absolute mode**: Converts absolute coordinates to relative movement
 - **Buttons**: Press/release translated to USB mouse clicks
 
 ### Keyboard Reports  
@@ -84,7 +84,7 @@ If the wrong USB type is selected, you'll get a compilation error with a helpful
 - The trackpad must be configured with USB Type selected BEFORE upload
 - Serial monitor shows real-time status and diagnostic output
 - Data printing can be toggled via 'd'/'D' commands to reduce serial traffic
-- Multi-touch support is available in PTP mode
+- Multi-touch support is available in PTP/Absolute mode
 - Keyboard output sends immediately when keys are detected
 
 ## References
