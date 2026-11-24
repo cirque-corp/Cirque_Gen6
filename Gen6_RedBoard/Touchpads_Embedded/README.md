@@ -93,6 +93,66 @@ API_C3.c (touchpad settings), API_HostBus.c (I2C-HID transfers) and HID_Reports.
 decoding) only use the functions above, so they can usually be used unchanged.
 
 ### Sample Output
-<!-- TODO before publishing: paste real Serial Monitor output from Touchpads_Embedded here, in a
-     ``` code block (start-up with one and with two touchpads, then a few reports in Mouse/Relative
-     and PTP/Absolute mode). The previous sample was removed because the output format changed. -->
+Start-up with both touchpads connected, a finger moving on each touchpad in Mouse/Relative
+mode, then 'a' to switch to PTP/Absolute mode (reports shortened):
+
+```
+Gen6 Touchpad Dev Kit - Embedded Demo
+[TP1] Touchpad #1 found
+[TP2] Touchpad #2 found
+[TP1] System Information
+Hardware ID:	0xA
+Firmware ID:	0x0
+Vendor ID:	0x488
+Product ID:	0xC002
+Version ID:	0xB001
+
+[TP2] System Information
+Hardware ID:	0xA
+Firmware ID:	0x0
+Vendor ID:	0x488
+Product ID:	0x10C0
+Version ID:	0x1
+
+Send 'h' for a list of commands
+
+[TP1] ReportID: 0x06, Buttons: ___, X_Delta:   10, Y_Delta:  -23, Scroll Delta:  0
+[TP1] ReportID: 0x06, Buttons: ___, X_Delta:   18, Y_Delta:  -48, Scroll Delta:  0
+[TP1] ReportID: 0x06, Buttons: ___, X_Delta:   23, Y_Delta:  -15, Scroll Delta:  0
+[TP2] ReportID: 0x06, Buttons: ___, X_Delta:    5, Y_Delta:   -1, Scroll Delta:  0
+[TP2] ReportID: 0x06, Buttons: ___, X_Delta:   71, Y_Delta:   -7, Scroll Delta:  0
+[TP2] ReportID: 0x06, Buttons: ___, X_Delta:  127, Y_Delta:    0, Scroll Delta:  0
+[TP1] Setting PTP/Absolute Mode...
+Done
+[TP2] Setting PTP/Absolute Mode...
+Done
+
+[TP1] ReportID: 0x01, Time: 11895, Buttons: 0, Contact Count: 1
+  Contact[0]: ID=0, Tip=1, Confidence=1, X= 496, Y= 137
+[TP1] ReportID: 0x01, Time: 11976, Buttons: 0, Contact Count: 1
+  Contact[0]: ID=0, Tip=1, Confidence=1, X= 498, Y= 141
+[TP1] ReportID: 0x01, Time: 12056, Buttons: 0, Contact Count: 1
+  Contact[0]: ID=0, Tip=1, Confidence=1, X= 498, Y= 150
+[TP2] ReportID: 0x01, Time: 25167, Buttons: 0, Contact Count: 1
+  Contact[0]: ID=0, Tip=1, Confidence=1, X=1497, Y= 827
+[TP2] ReportID: 0x01, Time: 25232, Buttons: 0, Contact Count: 1
+  Contact[0]: ID=0, Tip=1, Confidence=1, X=1494, Y= 825
+[TP2] ReportID: 0x01, Time: 25297, Buttons: 0, Contact Count: 1
+  Contact[0]: ID=0, Tip=1, Confidence=1, X=1485, Y= 820
+```
+
+Start-up with only Touchpad #1 connected:
+
+```
+Gen6 Touchpad Dev Kit - Embedded Demo
+[TP1] Touchpad #1 found
+[TP2] Touchpad #2 not connected (no answer at I2C address 0x2C, I2C error 2)
+[TP1] System Information
+Hardware ID:	0xA
+Firmware ID:	0x0
+Vendor ID:	0x488
+Product ID:	0xC002
+Version ID:	0xB001
+
+Send 'h' for a list of commands
+```

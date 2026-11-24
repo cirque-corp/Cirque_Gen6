@@ -174,6 +174,38 @@ pass 0 everywhere. The files to adapt are:
   requests with HB_HID_getReport() / HB_HID_setReport()
 
 ### Sample Output
-<!-- TODO before publishing: paste real Serial Monitor output from Touchpads_USB_PTP here, in a
-     ``` code block (start-up with Touchpad #1 only, Touchpad #2 only and both, plus the output of
-     'i'). The previous sample was removed because the output format changed. -->
+Start-up with both touchpads connected on Windows 11, followed by the PC's report requests as
+Windows sets up each Precision Touchpad:
+
+```
+Gen6 Touchpad Dev Kit - USB PTP Demo
+[TP1] Touchpad #1 found, VID 0x488 PID 0xC002, report descriptor 475 bytes, USB interface 2
+[TP2] Touchpad #2 found, VID 0x488 PID 0x10C0, report descriptor 475 bytes, USB interface 3
+USB: configured by the PC
+Send 'h' for a list of commands
+[TP1] PC GET_REPORT Feature ID 0x03 -> 257 bytes
+[TP2] PC GET_REPORT Feature ID 0x02 -> 3 bytes
+[TP2] PC GET_REPORT Feature ID 0x03 -> 257 bytes
+[TP1] PC SET_REPORT Feature ID 0x04: 04 03 
+[TP1] PC SET_REPORT Feature ID 0x05: 05 03 
+[TP2] PC SET_REPORT Feature ID 0x04: 04 03 
+[TP2] PC SET_REPORT Feature ID 0x05: 05 03 
+[TP1] PC SET_REPORT Feature ID 0x04: 04 03 
+[TP1] PC SET_REPORT Feature ID 0x05: 05 03 
+[TP2] PC SET_REPORT Feature ID 0x04: 04 03 
+[TP2] PC SET_REPORT Feature ID 0x05: 05 03 
+```
+
+After using both touchpads for a moment, 'i' prints:
+
+```
+[TP1] Touchpad #1 found, VID 0x488 PID 0xC002, report descriptor 475 bytes, USB interface 2
+  Reports forwarded: 28, dropped: 0
+  PC report requests: 6, failed: 0
+[TP2] Touchpad #2 found, VID 0x488 PID 0x10C0, report descriptor 475 bytes, USB interface 3
+  Reports forwarded: 49, dropped: 0
+  PC report requests: 6, failed: 0
+USB: configured by the PC
+```
+
+With only one touchpad connected, it is always USB interface 2, whichever connector it is on.
