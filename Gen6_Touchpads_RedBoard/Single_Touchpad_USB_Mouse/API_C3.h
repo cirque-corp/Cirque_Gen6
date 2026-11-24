@@ -1,7 +1,7 @@
 #ifndef API_C3_H
 #define API_C3_H
 
-// Copyright (c) 2018 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
+// Copyright (c) 2026 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
 
 /**@file API_Borax.h
    @brief This file contains the API for working with the Borax firmware

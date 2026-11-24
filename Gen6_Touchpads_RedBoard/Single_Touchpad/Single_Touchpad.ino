@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
+// Copyright (c) 2026 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
 
 #include "API_C3.h"         /** < Provides API calls to interact with API_C3 firmware */
 #include "API_Hardware.h"
@@ -147,6 +147,7 @@ void processSerialCommand(char rxChar)
         break;
         
     case 'a':
+    case 'A':
     case 'p':
         Serial.println(F("PTP/Absolute Mode Set"));
         // API_C3_setCRQ_AbsoluteMode();
@@ -274,7 +275,7 @@ void printHelpTable()
   //Serial.println(F("c\t-\tForce Compensation"));
   Serial.println(F("f\t-\tEnable Feed (default)"));
   Serial.println(F("F\t-\tDisable Feed"));
-  Serial.println(F("a, p\t-\tSet to PTP/Absolute Mode"));
+  Serial.println(F("a, A, p\t-\tSet to PTP/Absolute Mode"));
   Serial.println(F("r, m\t-\tSet to Mouse/Relative Mode (default)"));
   //Serial.println(F("S\t-\tSave Settings to Flash"));
   Serial.println(F("s\t-\tPrint System Info"));

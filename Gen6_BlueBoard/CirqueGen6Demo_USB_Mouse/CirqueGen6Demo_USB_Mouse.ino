@@ -1,4 +1,6 @@
-// USB Mouse and Keyboard Demo with Cirque Gen6 PTP Trackpad
+// Copyright (c) 2026 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
+
+// USB Mouse and Keyboard Demo with a Cirque Gen6 Touchpad on the Blue Board
 //   Teensy becomes a USB mouse/keyboard and responds to trackpad touch events
 //   You must select "Serial + Keyboard + Mouse + Joystick" from Tools > USB Type menu
 //
@@ -8,11 +10,7 @@
 #error "Within the Arduino IDE, please select 'Serial + Keyboard + Mouse + Joystick' or similar from Tools > USB Type menu to enable Mouse and Keyboard interfaces"
 #endif
 
-#include <i2c_device.h>
-#include <i2c_driver.h>
-#include <i2c_driver_wire.h>
-#include <i2c_register_slave.h>
-
+// use a better I2C library that allows larger buffer sizes
 #include <i2c_device.h>
 #include <i2c_driver.h>
 #include <i2c_driver_wire.h>

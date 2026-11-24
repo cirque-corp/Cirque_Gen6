@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
+// Copyright (c) 2026 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
 
 //#include <i2c_t3.h>
 #include "i2c_driver_wire.h"

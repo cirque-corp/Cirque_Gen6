@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
+// Copyright (c) 2026 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
 
 #include "Measurements.h"
 

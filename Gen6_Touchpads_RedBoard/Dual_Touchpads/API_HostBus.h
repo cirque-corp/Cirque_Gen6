@@ -1,7 +1,7 @@
 #ifndef API_HOSTBUS_H
 #define API_HOSTBUS_H
 
-// Copyright (c) 2018 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
+// Copyright (c) 2026 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
 /** @file */
 
 #include "I2C.h"

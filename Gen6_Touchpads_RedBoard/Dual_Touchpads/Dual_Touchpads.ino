@@ -329,6 +329,7 @@ void processSerialCommand(char rxChar0, char rxChar1)
                     
       case 'p':
       case 'a':
+      case 'A':
           Serial.println(F("Setting PTP/Absolute Mode..."));
           if (API_C3_setPtpMode(i2c_channel))
           {
@@ -507,7 +508,7 @@ void printHelpTable()
   //Serial.println(F("C#\t-\tFactory Calibrate"));
   Serial.println(F("f#\t-\tEnable Feed (default)"));
   Serial.println(F("F#\t-\tDisable Feed"));
-  Serial.println(F("p#, a#\t-\tSet to PTP/Absolute Mode"));
+  Serial.println(F("a#, A#, p#\t-\tSet to PTP/Absolute Mode"));
   Serial.println(F("r#, m#\t-\tSet to Mouse/Relative Mode (default)"));
   //Serial.println(F("S#\t-\tSave Settings to Flash"));
   Serial.println(F("s#\t-\tPrint System Info"));

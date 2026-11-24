@@ -1,7 +1,7 @@
 #ifndef API_HARDWARE_H
 #define API_HARDWARE_H
 
-// Copyright (c) 2023 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
+// Copyright (c) 2026 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
 
 /** This code controls the extra hardware functions provided
 	by the 02-000620-00 RevA01 Glidepoint Dev Kit board 

@@ -1,7 +1,7 @@
 #ifndef I2C_H
 #define I2C_H
 
-// Copyright (c) 2019 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
+// Copyright (c) 2026 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
 /** @file */
 
 #include <stddef.h>

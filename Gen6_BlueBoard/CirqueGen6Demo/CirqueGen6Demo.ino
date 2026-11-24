@@ -1,9 +1,6 @@
-// use a better I2C library that allows larger buffer sizes
-#include <i2c_device.h>
-#include <i2c_driver.h>
-#include <i2c_driver_wire.h>
-#include <i2c_register_slave.h>
+// Copyright (c) 2026 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
 
+// use a better I2C library that allows larger buffer sizes
 #include <i2c_device.h>
 #include <i2c_driver.h>
 #include <i2c_driver_wire.h>

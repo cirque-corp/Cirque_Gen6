@@ -1,8 +1,6 @@
-# Gen 6 Touchpad Dev Kit
+# Gen6 Touchpad Dev Kit - Serial Monitor Demo (Single Touchpad)
 
 Copyright (c) 2026 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
-
-(Initial Release)
 
 ### Overview
 
@@ -28,7 +26,7 @@ Available Commands (case sensitive)
 
 f	-	Enable Feed (default)
 F	-	Disable Feed
-a, p	-	Set to PTP/Absolute Mode
+a, A, p	-	Set to PTP/Absolute Mode
 r, m	-	Set to Mouse/Relative Mode (default)
 s	-	Print System Info
 b	-	Enable Adaptive Touch

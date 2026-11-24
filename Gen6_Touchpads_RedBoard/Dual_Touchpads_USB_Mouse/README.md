@@ -1,4 +1,4 @@
-# Gen6 Touchpad Dev Kit
+# Gen6 Touchpad Dev Kit - USB Mouse (Dual Touchpads)
 
 Copyright (c) 2026 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
 
@@ -32,7 +32,7 @@ Available Commands (case sensitive):
 
 f#	-	Enable Feed (default)
 F#	-	Disable Feed
-p#, a#	-	Set to PTP/Absolute Mode
+a#, A#, p#	-	Set to PTP/Absolute Mode
 r#, m#	-	Set to Mouse/Relative Mode (default)
 s#	-	Print System Info
 b#	-	Enable Adaptive Touch

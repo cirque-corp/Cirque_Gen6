@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
+// Copyright (c) 2026 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
 
 #ifndef __GEN6_BL_H__
 #define __GEN6_BL_H__

@@ -1,7 +1,7 @@
 /*
  * Borax_BL_I2C_Commands.c
  *
- * Copyright (c) 2021 Cirque Corp. Restrictions apply.
+ * Copyright (c) 2026 Cirque Corp. Restrictions apply.
  * See: www.cirque.com/sw-license
  */
 

@@ -1,7 +1,7 @@
 #ifndef HID_REPORTS_H
 #define HID_REPORTS_H
 
-// Copyright (c) 2018 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
+// Copyright (c) 2026 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>

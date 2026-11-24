@@ -1,4 +1,6 @@
-// Copyright (c) 2020 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
+# CustomMeas Demo (Teensy 3.2 hardware)
+
+Copyright (c) 2026 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
 
 This directory contains a sample program that demonstrates how to interface with Cirque's Olympus capacitive-touch SoC running the CustomMeas firmware. CustomMeas_Demo.ino is an Arduino project that acts as a bridge between Olympus and the PC. It communicates with a PC over USB-CDC (virtual COM port) and implements a simple, character-based command set to interact with Olympus.
 

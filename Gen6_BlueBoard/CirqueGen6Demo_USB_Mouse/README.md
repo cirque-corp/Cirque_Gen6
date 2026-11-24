@@ -1,6 +1,13 @@
-# CirqueGen6Demo_USB - USB Mouse and Keyboard Demo
+# CirqueGen6Demo_USB_Mouse - USB Mouse and Keyboard Demo
 
-USB HID mouse and keyboard example using the Cirque Gen6 trackpad module with Teensy 4.0 or 4.1.
+Copyright (c) 2026 Cirque Corp. Restrictions apply. See: www.cirque.com/sw-license
+
+USB HID mouse and keyboard example for the Cirque Blue Board (PCB# 02-000658-00 Rev E01 or
+later, Teensy 4.0 on-board). The Teensy converts the touchpad's reports into USB mouse movement
+and keyboard keys, so the PC sees a mouse (no multi-finger gestures). To make the PC see a real
+Precision Touchpad instead, use CirqueGen6Demo_USB_PTP.
+
+This project was previously named CirqueGen6Demo_USB.
 
 ## Features
 
@@ -25,7 +32,7 @@ If the wrong USB type is selected, you'll get a compilation error with a helpful
 
 ### PTP/Absolute Mode (Default)
 - Reports absolute X/Y coordinates
-- CirqueGen6Demo_USB converts these to relative mouse movement
+- CirqueGen6Demo_USB_Mouse converts these to relative mouse movement
 - Full multi-touch support with finger tracking
 - Best for touchpad-like behavior
 
@@ -74,10 +81,10 @@ If the wrong USB type is selected, you'll get a compilation error with a helpful
 
 ## Hardware Setup
 
-- Teensy 4.0 or 4.1 with I2C Cirque Gen6 trackpad module
-- Requires proper I2C pullup resistors (typically 4.7kΩ)
-- DR (Data Ready) pin connection for interrupt handling
-- Power supply for trackpad module
+- Cirque Blue Board, PCB# 02-000658-00 Rev E01 or later, with a Teensy 4.0 on-board
+- The board provides the touchpad's power, I2C (with pull-up resistors) and Data Ready
+  connections; no extra wiring is needed
+- Requires the Cirque and Teensy4_I2C_CRQMods libraries (see the libraries directory)
 
 ## Notes
 
