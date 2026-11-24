@@ -19,8 +19,9 @@ no other libraries are required.
 NOTE: The Arduino IDE requires projects to be located in a folder with a name 
 that matches that of the .ino file (in this case, CirqueGen6Demo_USB_PTP).
 
-NOTE: This project uses the same USB bridge as the red board's Single_Touchpad_USB_PTP project,
-which has been tested on Windows 11. This Blue Board version has not yet been tested on hardware.
+NOTE: This project uses the same USB bridge as the red board's Touchpads_USB_PTP project (formerly
+Single_Touchpad_USB_PTP and Dual_Touchpads_USB_PTP, both tested on Windows 11). This Blue Board
+version has not yet been tested on hardware.
 
 ## How It Works
 
